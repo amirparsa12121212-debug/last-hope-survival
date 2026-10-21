@@ -1,624 +1,540 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>راز بقا | طبقه ۳۰</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap');
-
-        :root {
-            --bg: #0a0a0f;
-            --panel: #14141f;
-            --accent: #ff2a2a;
-            --accent2: #00ff9d;
-            --text: #e8e8f0;
-            --muted: #8888a0;
-            --phone: #1a1a28;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-
-        body {
-            font-family: 'Vazirmatn', Tahoma, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            overflow: hidden;
-            background-image: radial-gradient(ellipse at 50% 0%, rgba(255, 42, 42, 0.1) 0%, transparent 70%);
-        }
-
-        .app {
-            width: 100%;
-            max-width: 480px;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            background: #050508;
-            box-shadow: 0 0 50px rgba(0,0,0,1);
-        }
-
-        /* نوار وضعیت بالا */
-        .status-bar {
-            background: #111118;
-            padding: 10px;
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 5px;
-            font-size: 11px;
-            border-bottom: 2px solid #222;
-            z-index: 10;
-        }
-
-        .stat {
-            background: #1a1a24;
-            border-radius: 6px;
-            padding: 5px;
-            text-align: center;
-            border: 1px solid #2a2a35;
-            transition: 0.3s;
-        }
-
-        .stat-label { color: var(--muted); font-size: 9px; display: block; }
-        .stat-value { font-weight: 800; font-size: 12px; margin-top: 2px; display: block; }
-        
-        .good { color: var(--accent2); }
-        .warn { color: #ffaa00; }
-        .bad { color: var(--accent); animation: pulse 1s infinite; }
-
-        @keyframes pulse { 50% { opacity: 0.5; } }
-
-        /* صفحه گرافیکی (پنجره) */
-        .window-view {
-            flex: 1;
-            position: relative;
-            background: #000;
-            overflow: hidden;
-            border-bottom: 3px solid #222;
-        }
-
-        canvas { display: block; width: 100%; height: 100%; }
-
-        /* رابط گوشی */
-        .phone-ui {
-            height: 35vh;
-            background: var(--phone);
-            border-top-left-radius: 20px;
-            border-top-right-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            border: 2px solid #2a2a3a;
-            border-bottom: none;
-            z-index: 10;
-        }
-
-        .phone-header {
-            background: #0f0f18;
-            padding: 10px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #2a2a3a;
-            border-top-left-radius: 18px;
-            border-top-right-radius: 18px;
-        }
-
-        .phone-title { font-weight: 800; font-size: 13px; color: var(--accent); }
-        .phone-time { font-size: 12px; font-weight: 600; color: #aaa; }
-
-        .messages {
-            flex: 1;
-            padding: 10px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            font-size: 12px;
-        }
-
-        .msg {
-            background: #222233;
-            padding: 8px 12px;
-            border-radius: 12px;
-            border-bottom-right-radius: 2px;
-            align-self: flex-start;
-            max-width: 85%;
-            animation: slideIn 0.3s ease-out;
-            line-height: 1.5;
-        }
-
-        .msg.system { background: #1a1a1a; border: 1px solid #333; color: #aaa; align-self: center; font-size: 10px; }
-
-        @keyframes slideIn { from { transform: translateY(10px); opacity: 0; } }
-
-        /* کنترل‌ها */
-        .controls {
-            background: #111118;
-            padding: 10px;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-        }
-
-        button {
-            font-family: inherit;
-            background: #222233;
-            color: white;
-            border: 1px solid #3a3a4a;
-            padding: 12px 5px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-        }
-
-        button:active { transform: scale(0.95); background: #333344; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        .btn-danger { background: #331111; border-color: #552222; color: #ff8888; }
-        .btn-action { background: #113322; border-color: #225544; color: #88ffaa; }
-        .btn-warn { background: #332211; border-color: #554422; color: #ffcc88; }
-
-        .icon { font-size: 18px; }
-        
-        #game-over {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.9);
-            display: none; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 100; text-align: center; padding: 20px;
-        }
-        #game-over h1 { color: var(--accent); margin-bottom: 10px; font-size: 24px;}
-        #game-over p { color: #aaa; margin-bottom: 20px;}
-        #game-over button { background: var(--accent); color: white; padding: 15px 30px; border-radius: 20px; font-size: 16px; border: none; font-weight: bold;}
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧟 Zombie Survival</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #0d0d0d;
+      color: #eee;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      user-select: none;
+    }
+    #game-container {
+      position: relative;
+      box-shadow: 0 0 40px rgba(255, 50, 50, 0.3);
+      border: 3px solid #333;
+      border-radius: 8px;
+    }
+    canvas {
+      display: block;
+      background: #1a1a1a;
+      cursor: crosshair;
+    }
+    #ui {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      font-size: 18px;
+      text-shadow: 0 0 6px #000;
+    }
+    #health-bar {
+      width: 200px;
+      height: 18px;
+      background: #333;
+      border: 2px solid #555;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    #health-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #e74c3c, #c0392b);
+      transition: width 0.2s;
+    }
+    #score, #wave {
+      background: rgba(0,0,0,0.6);
+      padding: 4px 12px;
+      border-radius: 4px;
+    }
+    #overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      z-index: 10;
+    }
+    #overlay h1 {
+      font-size: 48px;
+      margin-bottom: 10px;
+      color: #e74c3c;
+      text-shadow: 0 0 20px #e74c3c;
+    }
+    #overlay p {
+      font-size: 18px;
+      margin: 8px 0;
+      max-width: 400px;
+      line-height: 1.5;
+    }
+    #overlay button {
+      margin-top: 20px;
+      padding: 12px 32px;
+      font-size: 20px;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.15s;
+    }
+    #overlay button:hover {
+      background: #c0392b;
+      transform: scale(1.05);
+    }
+    #controls {
+      margin-top: 16px;
+      font-size: 14px;
+      opacity: 0.7;
+    }
+    .hidden {
+      display: none !important;
+    }
+  </style>
 </head>
 <body>
-
-<div class="app">
-    <!-- نوار وضعیت -->
-    <div class="status-bar">
-        <div class="stat"><span class="stat-label">❤️ جان</span><span class="stat-value good" id="ui-hp">100</span></div>
-        <div class="stat"><span class="stat-label">🍖 گرسنگی</span><span class="stat-value good" id="ui-hunger">100</span></div>
-        <div class="stat"><span class="stat-label">💧 تشنگی</span><span class="stat-value good" id="ui-thirst">100</span></div>
-        <div class="stat"><span class="stat-label">🔫 مهمات</span><span class="stat-value warn" id="ui-ammo">15</span></div>
+  <div id="game-container">
+    <canvas id="game" width="900" height="600"></canvas>
+    <div id="ui">
+      <div>
+        <div id="health-bar"><div id="health-fill"></div></div>
+      </div>
+      <div id="wave">Wave: 1</div>
+      <div id="score">Score: 0</div>
     </div>
-
-    <!-- صفحه گرافیکی (Canvas) -->
-    <div class="window-view">
-        <canvas id="gameCanvas"></canvas>
+    <div id="overlay">
+      <h1>🧟 Zombie Survival</h1>
+      <p>زامبی‌ها دارن میآن! زنده بمون و تا جایی که می‌تونی مقاومت کن.</p>
+      <p id="final-score" class="hidden"></p>
+      <button id="start-btn">شروع بازی 🔥</button>
+      <div id="controls">
+        حرکت: WASD یا فلش‌ها<br>
+        شلیک: کلیک ماوس یا Space<br>
+        هدف‌گیری: ماوس
+      </div>
     </div>
+  </div>
 
-    <!-- گوشی راهنما -->
-    <div class="phone-ui">
-        <div class="phone-header">
-            <span class="phone-title">راهنمای ناشناس</span>
-            <span class="phone-time" id="ui-time">ساعت: 20:00</span>
-        </div>
-        <div class="messages" id="chat-box">
-            <div class="msg system">اتصال برقرار شد...</div>
-            <div class="msg">نگران نباش. من میبینمت. از خونه بیرون نرو. الان زامبی‌ها همه جا هستن. باید طبقه به طبقه پایین بری. من کمکت میکنم.</div>
-        </div>
-    </div>
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const overlay = document.getElementById('overlay');
+    const startBtn = document.getElementById('start-btn');
+    const healthFill = document.getElementById('health-fill');
+    const scoreEl = document.getElementById('score');
+    const waveEl = document.getElementById('wave');
+    const finalScoreEl = document.getElementById('final-score');
 
-    <!-- دکمه‌های کنترل -->
-    <div class="controls">
-        <button class="btn-danger" onclick="shoot()">
-            <span class="icon">🔫</span> شلیک
-        </button>
-        <button class="btn-action" onclick="whistle()">
-            <span class="icon">📢</span> سوت زدن (V)
-        </button>
-        <button class="btn-warn" onclick="eatDrink()">
-            <span class="icon">🍖</span> خوردن/نوشیدن
-        </button>
-        <button onclick="sendDog()">
-            <span class="icon">🐕</span> فرمان به شرمَن
-        </button>
-        <button onclick="craftBarricade()">
-            <span class="icon">🪵</span> سنگرسازی
-        </button>
-        <button onclick="saveGame()">
-            <span class="icon">💾</span> ذخیره بازی
-        </button>
-    </div>
-    
-    <!-- صفحه پایان بازی -->
-    <div id="game-over">
-        <h1 id="go-title">شما مردید!</h1>
-        <p id="go-desc">زامبی‌ها به شما رسیدند...</p>
-        <button onclick="location.reload()">شروع دوباره</button>
-    </div>
-</div>
+    // Game state
+    let running = false;
+    let score = 0;
+    let wave = 1;
+    let keys = {};
+    let mouse = { x: 0, y: 0, down: false };
+    let lastShot = 0;
+    let particles = [];
+    let blood = [];
 
-<script>
-// ==========================================
-// ۱. تنظیمات و موتور صدا (Web Audio API)
-// ==========================================
-const AudioContext = window.AudioContext || window.webkitAudioContext;
-let audioCtx;
+    // Player
+    const player = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      radius: 16,
+      speed: 3.2,
+      health: 100,
+      maxHealth: 100,
+      angle: 0,
+      shootCooldown: 180
+    };
 
-function initAudio() {
-    if (!audioCtx) {
-        audioCtx = new AudioContext();
+    // Arrays
+    let zombies = [];
+    let bullets = [];
+
+    // Colors
+    const colors = {
+      player: '#3498db',
+      zombie: '#27ae60',
+      zombieDark: '#1e8449',
+      bullet: '#f1c40f',
+      blood: '#c0392b'
+    };
+
+    // Init
+    function resetGame() {
+      player.x = canvas.width / 2;
+      player.y = canvas.height / 2;
+      player.health = 100;
+      player.angle = 0;
+      score = 0;
+      wave = 1;
+      zombies = [];
+      bullets = [];
+      particles = [];
+      blood = [];
+      lastShot = 0;
+      spawnWave();
+      updateUI();
     }
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
+
+    function spawnWave() {
+      const count = 4 + wave * 2;
+      for (let i = 0; i < count; i++) {
+        spawnZombie();
+      }
     }
-}
 
-// تابع تولید صدای سفارشی
-function playSound(type) {
-    if (!audioCtx) return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    const now = audioCtx.currentTime;
+    function spawnZombie() {
+      const side = Math.floor(Math.random() * 4);
+      let x, y;
+      if (side === 0) { x = Math.random() * canvas.width; y = -30; }
+      else if (side === 1) { x = canvas.width + 30; y = Math.random() * canvas.height; }
+      else if (side === 2) { x = Math.random() * canvas.width; y = canvas.height + 30; }
+      else { x = -30; y = Math.random() * canvas.height; }
 
-    if (type === 'shoot') {
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(300, now);
-        osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.2);
-        gain.gain.setValueAtTime(1, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-        osc.start(now); osc.stop(now + 0.2);
-    } else if (type === 'whistle') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(1000, now);
-        osc.frequency.linearRampToValueAtTime(1500, now + 0.3);
-        gain.gain.setValueAtTime(0.5, now);
-        gain.gain.linearRampToValueAtTime(0, now + 0.5);
-        osc.start(now); osc.stop(now + 0.5);
-    } else if (type === 'dog') {
-        // صدای پارس سگ
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, now);
-        osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
-        gain.gain.setValueAtTime(1, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-        osc.start(now); osc.stop(now + 0.15);
-    } else if (type === 'zombie') {
-        // ناله زامبی
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(80, now);
-        osc.frequency.linearRampToValueAtTime(60, now + 1);
-        gain.gain.setValueAtTime(0.1, now);
-        gain.gain.linearRampToValueAtTime(0, now + 1.5);
-        osc.start(now); osc.stop(now + 1.5);
-    } else if (type === 'hit') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(100, now);
-        osc.frequency.exponentialRampToValueAtTime(10, now + 0.3);
-        gain.gain.setValueAtTime(0.8, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-        osc.start(now); osc.stop(now + 0.3);
+      const speed = 0.7 + Math.random() * 0.6 + wave * 0.08;
+      const health = 30 + wave * 8;
+
+      zombies.push({
+        x, y,
+        radius: 14 + Math.random() * 4,
+        speed,
+        health,
+        maxHealth: health,
+        angle: 0,
+        hitFlash: 0
+      });
     }
-}
 
-// ==========================================
-// ۲. متغیرهای بازی و وضعیت
-// ==========================================
-let gameState = {
-    hp: 100,
-    hunger: 100,
-    thirst: 100,
-    ammo: 15,
-    food: 2,
-    water: 2,
-    time: 0, // دقیقه بازی
-    day: 1,
-    powerOut: false,
-    dogActive: false,
-    dogHunger: 100,
-    barricades: 0,
-    isDead: false,
-    zombies: []
-};
+    // Input
+    window.addEventListener('keydown', e => {
+      keys[e.code] = true;
+      if (e.code === 'Space') e.preventDefault();
+    });
+    window.addEventListener('keyup', e => keys[e.code] = false);
 
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-let width, height;
+    canvas.addEventListener('mousemove', e => {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+    });
+    canvas.addEventListener('mousedown', () => mouse.down = true);
+    canvas.addEventListener('mouseup', () => mouse.down = false);
+    canvas.addEventListener('mouseleave', () => mouse.down = false);
 
-function resize() {
-    width = canvas.parentElement.clientWidth;
-    height = canvas.parentElement.clientHeight;
-    canvas.width = width;
-    canvas.height = height;
-}
-window.addEventListener('resize', resize);
+    // Helpers
+    function dist(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    }
 
-// ==========================================
-// ۳. سیستم گرافیکی و انیمیشن (Canvas)
-// ==========================================
-function drawScene() {
-    ctx.clearRect(0, 0, width, height);
+    function angleTo(from, to) {
+      return Math.atan2(to.y - from.y, to.x - from.x);
+    }
 
-    // آسمان (تغییر رنگ بر اساس زمان)
-    let skyColor = gameState.powerOut ? '#050508' : '#151a24';
-    ctx.fillStyle = skyColor;
-    ctx.fillRect(0, 0, width, height * 0.6);
+    function createParticles(x, y, color, count = 8) {
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x, y,
+          vx: (Math.random() - 0.5) * 6,
+          vy: (Math.random() - 0.5) * 6,
+          life: 30 + Math.random() * 20,
+          maxLife: 50,
+          color,
+          size: 2 + Math.random() * 3
+        });
+      }
+    }
 
-    // ساختمان‌های شهر
-    ctx.fillStyle = '#0a0a10';
-    for (let i = 0; i < 10; i++) {
-        let bw = 30 + (i * 7) % 20;
-        let bh = 50 + (i * 13) % 80;
-        let bx = (i * 45) % width;
-        ctx.fillRect(bx, height * 0.6 - bh, bw, bh);
-        
-        // پنجره‌های روشن (اگر برق باشد)
-        if (!gameState.powerOut) {
-            ctx.fillStyle = 'rgba(255, 255, 200, 0.2)';
-            for(let j=0; j<3; j++) {
-                if(Math.random() > 0.5) ctx.fillRect(bx+5, height*0.6 - bh + 10 + j*15, 5, 5);
-            }
-            ctx.fillStyle = '#0a0a10'; // بازگشت به رنگ دیوار
+    function createBlood(x, y) {
+      for (let i = 0; i < 5; i++) {
+        blood.push({
+          x: x + (Math.random() - 0.5) * 10,
+          y: y + (Math.random() - 0.5) * 10,
+          size: 3 + Math.random() * 5,
+          life: 120 + Math.random() * 80
+        });
+      }
+    }
+
+    // Update
+    function update() {
+      if (!running) return;
+
+      // Player movement
+      let dx = 0, dy = 0;
+      if (keys['KeyW'] || keys['ArrowUp']) dy -= 1;
+      if (keys['KeyS'] || keys['ArrowDown']) dy += 1;
+      if (keys['KeyA'] || keys['ArrowLeft']) dx -= 1;
+      if (keys['KeyD'] || keys['ArrowRight']) dx += 1;
+
+      if (dx || dy) {
+        const len = Math.hypot(dx, dy);
+        player.x += (dx / len) * player.speed;
+        player.y += (dy / len) * player.speed;
+      }
+
+      // Bounds
+      player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+      player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
+
+      // Aim
+      player.angle = angleTo(player, mouse);
+
+      // Shooting
+      const now = Date.now();
+      if ((mouse.down || keys['Space']) && now - lastShot > player.shootCooldown) {
+        lastShot = now;
+        const speed = 9;
+        bullets.push({
+          x: player.x + Math.cos(player.angle) * (player.radius + 4),
+          y: player.y + Math.sin(player.angle) * (player.radius + 4),
+          vx: Math.cos(player.angle) * speed,
+          vy: Math.sin(player.angle) * speed,
+          life: 60
+        });
+      }
+
+      // Update bullets
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        b.x += b.vx;
+        b.y += b.vy;
+        b.life--;
+        if (b.life <= 0 || b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
+          bullets.splice(i, 1);
+          continue;
         }
+
+        // Hit zombies
+        for (let j = zombies.length - 1; j >= 0; j--) {
+          const z = zombies[j];
+          if (dist(b, z) < z.radius + 4) {
+            z.health -= 25;
+            z.hitFlash = 8;
+            createParticles(b.x, b.y, '#f1c40f', 4);
+            bullets.splice(i, 1);
+
+            if (z.health <= 0) {
+              score += 10 + wave * 2;
+              createParticles(z.x, z.y, colors.zombie, 12);
+              createBlood(z.x, z.y);
+              zombies.splice(j, 1);
+            }
+            break;
+          }
+        }
+      }
+
+      // Update zombies
+      for (let i = zombies.length - 1; i >= 0; i--) {
+        const z = zombies[i];
+        z.angle = angleTo(z, player);
+        z.x += Math.cos(z.angle) * z.speed;
+        z.y += Math.sin(z.angle) * z.speed;
+        if (z.hitFlash > 0) z.hitFlash--;
+
+        // Hit player
+        if (dist(z, player) < z.radius + player.radius - 4) {
+          player.health -= 0.4;
+          if (Math.random() < 0.1) createBlood(player.x, player.y);
+        }
+      }
+
+      // Wave complete?
+      if (zombies.length === 0) {
+        wave++;
+        spawnWave();
+      }
+
+      // Particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= 0.96;
+        p.vy *= 0.96;
+        p.life--;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+
+      // Blood fade
+      for (let i = blood.length - 1; i >= 0; i--) {
+        blood[i].life--;
+        if (blood[i].life <= 0) blood.splice(i, 1);
+      }
+
+      // Death
+      if (player.health <= 0) {
+        player.health = 0;
+        running = false;
+        finalScoreEl.textContent = `امتیاز نهایی: ${score} | موج: ${wave}`;
+        finalScoreEl.classList.remove('hidden');
+        overlay.querySelector('h1').textContent = '💀 مردی!';
+        startBtn.textContent = 'دوباره بازی کن 🔄';
+        overlay.classList.remove('hidden');
+      }
+
+      updateUI();
     }
 
-    // خیابان
-    ctx.fillStyle = '#08080a';
-    ctx.fillRect(0, height * 0.6, width, height * 0.4);
-
-    // باران و رعد و برق
-    if (Math.random() < 0.05) { // رعد و برق تصادفی
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fillRect(0, 0, width, height);
+    function updateUI() {
+      healthFill.style.width = Math.max(0, player.health) + '%';
+      scoreEl.textContent = `Score: ${score}`;
+      waveEl.textContent = `Wave: ${wave}`;
     }
 
-    ctx.strokeStyle = 'rgba(150, 150, 255, 0.2)';
-    ctx.lineWidth = 1;
-    for (let i = 0; i < 20; i++) {
+    // Draw
+    function draw() {
+      // Background
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Grid
+      ctx.strokeStyle = '#222';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += 40) {
         ctx.beginPath();
-        let rx = Math.random() * width;
-        let ry = Math.random() * height;
-        ctx.moveTo(rx, ry);
-        ctx.lineTo(rx - 5, ry + 15);
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
         ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+
+      // Blood stains
+      blood.forEach(b => {
+        ctx.globalAlpha = Math.min(1, b.life / 60);
+        ctx.fillStyle = colors.blood;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+
+      // Bullets
+      bullets.forEach(b => {
+        ctx.fillStyle = colors.bullet;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, 2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Zombies
+      zombies.forEach(z => {
+        ctx.save();
+        ctx.translate(z.x, z.y);
+        ctx.rotate(z.angle);
+
+        // Body
+        ctx.fillStyle = z.hitFlash > 0 ? '#fff' : colors.zombie;
+        ctx.beginPath();
+        ctx.arc(0, 0, z.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eyes
+        ctx.fillStyle = '#111';
+        ctx.beginPath();
+        ctx.arc(6, -5, 3, 0, Math.PI * 2);
+        ctx.arc(6, 5, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Health bar
+        if (z.health < z.maxHealth) {
+          ctx.rotate(-z.angle);
+          ctx.fillStyle = '#333';
+          ctx.fillRect(-z.radius, -z.radius - 10, z.radius * 2, 4);
+          ctx.fillStyle = '#e74c3c';
+          ctx.fillRect(-z.radius, -z.radius - 10, z.radius * 2 * (z.health / z.maxHealth), 4);
+        }
+
+        ctx.restore();
+      });
+
+      // Player
+      ctx.save();
+      ctx.translate(player.x, player.y);
+      ctx.rotate(player.angle);
+
+      // Body
+      ctx.fillStyle = colors.player;
+      ctx.beginPath();
+      ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Gun
+      ctx.fillStyle = '#555';
+      ctx.fillRect(8, -3, 18, 6);
+
+      // Eyes
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(5, -6, 4, 0, Math.PI * 2);
+      ctx.arc(5, 6, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#111';
+      ctx.beginPath();
+      ctx.arc(6, -6, 2, 0, Math.PI * 2);
+      ctx.arc(6, 6, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      // Particles
+      particles.forEach(p => {
+        ctx.globalAlpha = p.life / p.maxLife;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
     }
 
-    // رسم زامبی‌ها
-    ctx.fillStyle = '#3d5c3d';
-    gameState.zombies.forEach(z => {
-        // حرکت لرزان
-        let zx = z.x + Math.sin(Date.now() / 200) * 2;
-        ctx.beginPath();
-        ctx.arc(zx, z.y, 8, 0, Math.PI * 2); // سر
-        ctx.fill();
-        ctx.fillRect(zx - 5, z.y + 8, 10, 15); // بدن
+    // Loop
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    // Start
+    startBtn.addEventListener('click', () => {
+      resetGame();
+      running = true;
+      overlay.classList.add('hidden');
+      finalScoreEl.classList.add('hidden');
     });
 
-    // رسم سگ (شرمَن)
-    if (gameState.dogActive) {
-        ctx.fillStyle = '#c2a77a';
-        ctx.beginPath();
-        ctx.arc(width - 50, height * 0.7, 6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillRect(width - 54, height * 0.7 + 6, 8, 12);
-    }
-}
-
-// ==========================================
-// ۴. مکانیک‌های گیم‌پلی
-// ==========================================
-function updateUI() {
-    document.getElementById('ui-hp').innerText = Math.max(0, Math.floor(gameState.hp));
-    document.getElementById('ui-hp').className = 'stat-value ' + (gameState.hp > 50 ? 'good' : gameState.hp > 20 ? 'warn' : 'bad');
-    
-    document.getElementById('ui-hunger').innerText = Math.max(0, Math.floor(gameState.hunger));
-    document.getElementById('ui-hunger').className = 'stat-value ' + (gameState.hunger > 50 ? 'good' : 'warn');
-    
-    document.getElementById('ui-thirst').innerText = Math.max(0, Math.floor(gameState.thirst));
-    document.getElementById('ui-thirst').className = 'stat-value ' + (gameState.thirst > 50 ? 'good' : 'warn');
-    
-    document.getElementById('ui-ammo').innerText = gameState.ammo;
-    
-    // ساعت
-    let h = Math.floor((gameState.time / 60) % 24);
-    let m = Math.floor(gameState.time % 60);
-    document.getElementById('ui-time').innerText = `روز ${gameState.day} - ${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
-}
-
-function addMessage(text, isSystem = false) {
-    const chat = document.getElementById('chat-box');
-    const div = document.createElement('div');
-    div.className = 'msg' + (isSystem ? ' system' : '');
-    div.innerText = text;
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
-}
-
-// شلیک
-function shoot() {
-    if (gameState.ammo <= 0) {
-        addMessage("خشاب خالی است! مهمات نداری.", true);
-        return;
-    }
-    initAudio(); playSound('shoot');
-    gameState.ammo--;
-    
-    // کشتن یک زامبی نزدیک
-    if (gameState.zombies.length > 0) {
-        gameState.zombies.pop();
-        addMessage("یک زامبی را از پا درآوردی! صدای شلیک زامبی‌های بیشتری جذب کرد.", true);
-        // جذب شدن زامبی جدید به خاطر صدا
-        setTimeout(spawnZombie, 1000);
-        setTimeout(spawnZombie, 2500);
-    } else {
-        addMessage("شلیک کردی، اما زامبی‌ای در دید نبود.", true);
-    }
-    updateUI();
-}
-
-// سوت زدن (طعمه یا فرمان به سگ)
-function whistle() {
-    initAudio(); playSound('whistle');
-    gameState.dogActive = !gameState.dogActive;
-    
-    if (gameState.dogActive) {
-        addMessage("سگ نگهبان (شرمَن) به سمتت آمد!", true);
-        playSound('dog');
-    } else {
-        addMessage("شرمَن به گشت‌زنی رفت.", true);
-    }
-    
-    addMessage("سوت تو زامبی‌ها را جذب کرد!", true);
-    spawnZombie();
-    spawnZombie();
-}
-
-// خوردن و نوشیدن
-function eatDrink() {
-    if (gameState.hunger < 50 && gameState.food > 0) {
-        gameState.food--;
-        gameState.hunger = Math.min(100, gameState.hunger + 30);
-        addMessage("یک کنسرو خوردی.", true);
-    } else if (gameState.thirst < 50 && gameState.water > 0) {
-        gameState.water--;
-        gameState.thirst = Math.min(100, gameState.thirst + 30);
-        addMessage("آب نوشیدی.", true);
-    } else {
-        addMessage("نیازی به خوردن یا نوشیدن نداری یا وسیله‌ای نداری!", true);
-    }
-    updateUI();
-}
-
-// فرستادن سگ برای حمله
-function sendDog() {
-    if (!gameState.dogActive) {
-        addMessage("اول سوت بزن تا سگ پیشت بیاید!", true);
-        return;
-    }
-    initAudio(); playSound('dog');
-    addMessage("شرمَن حمله کرد!", true);
-    if (gameState.zombies.length > 0) {
-        gameState.zombies.pop();
-    }
-}
-
-// ساخت سنگر
-function craftBarricade() {
-    gameState.barricades++;
-    addMessage("یک سنگر چوبی جلوی در ورودی ساختی.", true);
-}
-
-// تولید زامبی
-function spawnZombie() {
-    if (gameState.zombies.length < 15) {
-        gameState.zombies.push({
-            x: Math.random() * width,
-            y: height * 0.6 + Math.random() * height * 0.3
-        });
-    }
-}
-
-// ذخیره بازی
-function saveGame() {
-    localStorage.setItem('razBaqaSave', JSON.stringify(gameState));
-    addMessage("بازی با موفقیت ذخیره شد.", true);
-}
-
-// بارگذاری بازی
-function loadGame() {
-    const saved = localStorage.getItem('razBaqaSave');
-    if (saved) {
-        gameState = JSON.parse(saved);
-        addMessage("بازی قبلی بارگذاری شد.", true);
-    }
-}
-
-// ==========================================
-// ۵. حلقه بازی (Game Loop)
-// ==========================================
-let lastTime = 0;
-function gameLoop(time) {
-    if (gameState.isDead) return;
-    
-    const deltaTime = (time - lastTime) / 1000;
-    lastTime = time;
-
-    // کاهش تدریجی نیازها
-    gameState.hunger -= deltaTime * 0.5;
-    gameState.thirst -= deltaTime * 0.8;
-
-    if (gameState.hunger <= 0 || gameState.thirst <= 0) {
-        gameState.hp -= deltaTime * 2;
-    }
-
-    // سیستم زمان
-    gameState.time += deltaTime * 1.5; // گذر زمان سریع‌تر
-    if (gameState.time > 1440) {
-        gameState.time = 0;
-        gameState.day++;
-    }
-
-    // قطع برق بعد از ۴ ساعت
-    if (gameState.time > 240 && !gameState.powerOut) {
-        gameState.powerOut = true;
-        addMessage("هشدار: برق ساختمان قطع شد!", true);
-        playSound('zombie');
-    }
-
-    // حمله زامبی‌ها به ساختمان (کاهش HP)
-    if (gameState.zombies.length > 5 && gameState.barricades === 0) {
-        if (Math.random() < 0.1) {
-            gameState.hp -= 5;
-            playSound('hit');
-            addMessage("یک زامبی به پنجره ضربه زد! آسیب دیدی.", true);
-        }
-    }
-
-    // شرایط باخت
-    if (gameState.hp <= 0) {
-        gameState.isDead = true;
-        document.getElementById('game-over').style.display = 'flex';
-    }
-
-    drawScene();
-    updateUI();
-    
-    // فقط هر ۱ ثانیه UI آپدیت شود تا سنگین نشود
-    if (Math.floor(gameState.time) % 60 === 0 && Math.random() < 0.01) {
-        playSound('zombie');
-    }
-
-    requestAnimationFrame(gameLoop);
-}
-
-// ==========================================
-// ۶. راه‌اندازی اولیه
-// ==========================================
-function init() {
-    resize();
-    loadGame();
-    
-    // تولید زامبی‌های اولیه
-    if (gameState.zombies.length === 0) {
-        for(let i=0; i<8; i++) spawnZombie();
-    }
-
-    // شروع بازی
-    requestAnimationFrame(gameLoop);
-    
-    // پیام‌های داستانی زمان‌بندی شده
-    setTimeout(() => addMessage("صدای سگت رو میشنوم... سوت بزن تا بیاد پیشت.", false), 10000);
-    setTimeout(() => addMessage("مراقب باش! زامبی‌ها به صدا حساسن. شلیک نکن مگه اینکه مجبور باشی.", false), 25000);
-    setTimeout(() => addMessage("برای زنده موندن باید سنگر بسازی. دکمه سنگرسازی رو بزن.", false), 45000);
-}
-
-// شروع پس از کلیک کاربر (برای فعال شدن صدا در مرورگر)
-document.body.addEventListener('click', () => {
-    initAudio();
-}, { once: true });
-
-init();
-</script>
+    // First draw
+    draw();
+    loop();
+  </script>
 </body>
 </html>
