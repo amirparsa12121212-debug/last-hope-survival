@@ -5,76 +5,70 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>برج ۳۰ - Survival Horror</title>
 <style>
-/* ===== استایل‌های اصلی بازی ===== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, sans-serif; cursor: none; }
+body { overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, sans-serif; cursor: none; user-select: none; }
 #gameCanvas { width: 100vw; height: 100vh; display: block; }
 
-/* ===== کراس‌هیر ===== */
 #crosshair {
   position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  width: 24px; height: 24px; pointer-events: none; z-index: 100;
+  width: 20px; height: 20px; pointer-events: none; z-index: 100;
 }
 #crosshair::before, #crosshair::after {
-  content: ''; position: absolute; background: rgba(255,255,255,0.7);
+  content: ''; position: absolute; background: rgba(255,255,255,0.6);
 }
-#crosshair::before { width: 2px; height: 100%; left: 50%; transform: translateX(-50%); }
-#crosshair::after { height: 2px; width: 100%; top: 50%; transform: translateY(-50%); }
+#crosshair::before { width: 1px; height: 100%; left: 50%; transform: translateX(-50%); }
+#crosshair::after { height: 1px; width: 100%; top: 50%; transform: translateY(-50%); }
 
-/* ===== گوشی هوشمند (Diegetic UI) ===== */
 #smartphone {
-  position: fixed; bottom: -300px; right: 30px; width: 200px; height: 360px;
-  background: #111; border-radius: 20px; border: 3px solid #333;
-  z-index: 200; transition: bottom 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+  position: fixed; bottom: -320px; right: 20px; width: 180px; height: 320px;
+  background: #111; border-radius: 18px; border: 2px solid #444;
+  z-index: 200; transition: bottom 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.9);
 }
-#smartphone.active { bottom: 20px; }
+#smartphone.active { bottom: 15px; }
 #phoneScreen {
   width: 100%; height: 100%; background: linear-gradient(135deg, #0a0a2e, #1a1a3e);
-  padding: 15px; color: #0f0; font-size: 11px; overflow-y: auto;
+  padding: 12px; color: #0f0; font-size: 10px; overflow-y: auto;
   font-family: 'Courier New', monospace; direction: rtl;
 }
-#phoneScreen::-webkit-scrollbar { width: 3px; }
-#phoneScreen::-webkit-scrollbar-thumb { background: #0f0; border-radius: 3px; }
+#phoneScreen::-webkit-scrollbar { width: 2px; }
+#phoneScreen::-webkit-scrollbar-thumb { background: #0f0; }
 .phone-header {
-  text-align: center; padding: 8px; border-bottom: 1px solid #0f03;
-  margin-bottom: 10px; font-size: 10px; color: #0a0;
+  text-align: center; padding: 6px; border-bottom: 1px solid #0f03;
+  margin-bottom: 8px; font-size: 9px; color: #0a0;
 }
 .phone-msg {
   background: rgba(0,255,0,0.05); border: 1px solid #0f03;
-  border-radius: 8px; padding: 8px; margin: 6px 0;
-  animation: msgAppear 0.5s ease-out;
+  border-radius: 6px; padding: 6px; margin: 5px 0;
+  animation: msgAppear 0.4s ease-out;
 }
-@keyframes msgAppear { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.phone-msg .sender { color: #f80; font-size: 9px; margin-bottom: 3px; }
+@keyframes msgAppear { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.phone-msg .sender { color: #f80; font-size: 8px; margin-bottom: 2px; }
 .phone-msg .text { color: #0f0; line-height: 1.4; }
-.phone-time { color: #0a0; font-size: 8px; text-align: center; margin-top: 10px; }
+.phone-time { color: #0a0; font-size: 8px; text-align: center; margin-top: 8px; }
 
-/* ===== HUD مینیمال ===== */
 #hud {
-  position: fixed; bottom: 30px; left: 30px; z-index: 150;
+  position: fixed; bottom: 25px; left: 25px; z-index: 150;
   pointer-events: none;
 }
 .hud-bar {
-  width: 200px; height: 6px; background: rgba(255,255,255,0.1);
-  border-radius: 3px; margin: 4px 0; overflow: hidden;
+  width: 180px; height: 5px; background: rgba(255,255,255,0.1);
+  border-radius: 3px; margin: 3px 0; overflow: hidden;
 }
 .hud-bar-fill {
   height: 100%; border-radius: 3px; transition: width 0.3s;
 }
 #healthBar .hud-bar-fill { background: linear-gradient(90deg, #f00, #f44); width: 100%; }
 #staminaBar .hud-bar-fill { background: linear-gradient(90deg, #0af, #4cf); width: 100%; }
-.hud-label { color: rgba(255,255,255,0.5); font-size: 10px; margin-bottom: 2px; }
+.hud-label { color: rgba(255,255,255,0.5); font-size: 9px; margin-bottom: 1px; }
 
-/* ===== اطلاعات طبقه ===== */
 #floorInfo {
-  position: fixed; top: 30px; left: 50%; transform: translateX(-50%);
-  color: rgba(255,255,255,0.6); font-size: 14px; z-index: 150;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.8); pointer-events: none;
-  letter-spacing: 3px;
+  position: fixed; top: 25px; left: 50%; transform: translateX(-50%);
+  color: rgba(255,255,255,0.7); font-size: 16px; z-index: 150;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.9); pointer-events: none;
+  letter-spacing: 2px; font-family: 'Courier New', monospace;
 }
 
-/* ===== منوی شروع ===== */
 #startMenu {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background: linear-gradient(135deg, #0a0a0a, #1a0a0a);
@@ -82,55 +76,52 @@ body { overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, sans
   align-items: center; justify-content: center;
 }
 #startMenu h1 {
-  font-size: 72px; color: #fff; text-shadow: 0 0 30px rgba(255,50,50,0.5);
-  margin-bottom: 10px; letter-spacing: 8px;
+  font-size: 64px; color: #fff; text-shadow: 0 0 30px rgba(255,50,50,0.5);
+  margin-bottom: 8px; letter-spacing: 6px;
 }
 #startMenu .subtitle {
-  color: rgba(255,255,255,0.4); font-size: 16px; margin-bottom: 50px;
-  letter-spacing: 5px;
+  color: rgba(255,255,255,0.4); font-size: 14px; margin-bottom: 40px;
+  letter-spacing: 4px;
 }
 #startBtn {
-  padding: 15px 60px; font-size: 18px; background: transparent;
+  padding: 14px 50px; font-size: 16px; background: transparent;
   border: 2px solid rgba(255,255,255,0.3); color: #fff;
-  cursor: pointer; letter-spacing: 3px; transition: all 0.3s;
-  border-radius: 4px;
+  cursor: pointer; letter-spacing: 2px; transition: all 0.3s;
+  border-radius: 4px; font-family: inherit;
 }
 #startBtn:hover {
   background: rgba(255,50,50,0.2); border-color: #f33;
   box-shadow: 0 0 30px rgba(255,50,50,0.3);
 }
 #continueBtn {
-  padding: 10px 40px; font-size: 14px; background: transparent;
+  padding: 10px 35px; font-size: 13px; background: transparent;
   border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6);
-  cursor: pointer; margin-top: 15px; letter-spacing: 2px;
-  border-radius: 4px; transition: all 0.3s;
+  cursor: pointer; margin-top: 12px; letter-spacing: 2px;
+  border-radius: 4px; transition: all 0.3s; font-family: inherit;
 }
 #continueBtn:hover { border-color: #0f0; color: #0f0; }
 
-/* ===== لودینگ ===== */
 #loadingScreen {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background: #000; z-index: 2000; display: none;
   flex-direction: column; align-items: center; justify-content: center;
 }
 #loadingBar {
-  width: 300px; height: 3px; background: rgba(255,255,255,0.1);
-  border-radius: 2px; overflow: hidden; margin-top: 20px;
+  width: 280px; height: 3px; background: rgba(255,255,255,0.1);
+  border-radius: 2px; overflow: hidden; margin-top: 15px;
 }
 #loadingBarFill {
   width: 0%; height: 100%; background: #f33;
   transition: width 0.3s; border-radius: 2px;
 }
-#loadingText { color: rgba(255,255,255,0.5); font-size: 12px; letter-spacing: 3px; }
+#loadingText { color: rgba(255,255,255,0.5); font-size: 11px; letter-spacing: 3px; }
 
-/* ===== راهنمای کنترل ===== */
 #controls {
-  position: fixed; bottom: 30px; right: 30px; z-index: 150;
-  color: rgba(255,255,255,0.3); font-size: 10px; pointer-events: none;
-  text-align: right; line-height: 1.8;
+  position: fixed; bottom: 25px; right: 25px; z-index: 150;
+  color: rgba(255,255,255,0.35); font-size: 10px; pointer-events: none;
+  text-align: right; line-height: 1.7;
 }
 
-/* ===== افکت آسیب ===== */
 #damageOverlay {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   pointer-events: none; z-index: 90; opacity: 0;
@@ -138,17 +129,23 @@ body { overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, sans
   transition: opacity 0.3s;
 }
 
-/* ===== ساعت بازی ===== */
 #gameClock {
-  position: fixed; top: 30px; right: 30px; z-index: 150;
-  color: rgba(255,255,255,0.4); font-size: 12px; pointer-events: none;
+  position: fixed; top: 25px; right: 25px; z-index: 150;
+  color: rgba(255,255,255,0.5); font-size: 13px; pointer-events: none;
   font-family: 'Courier New', monospace;
+}
+
+#interactionPrompt {
+  position: fixed; top: 55%; left: 50%; transform: translateX(-50%);
+  color: rgba(255,255,255,0.7); font-size: 13px; z-index: 150;
+  pointer-events: none; opacity: 0; transition: opacity 0.3s;
+  text-shadow: 0 1px 5px rgba(0,0,0,0.8);
+  background: rgba(0,0,0,0.5); padding: 6px 14px; border-radius: 4px;
 }
 </style>
 </head>
 <body>
 
-<!-- منوی شروع -->
 <div id="startMenu">
   <h1>TOWER 30</h1>
   <div class="subtitle">بقا در برج سی طبقه</div>
@@ -156,28 +153,17 @@ body { overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, sans
   <button id="continueBtn" onclick="continueGame()" style="display:none;">ادامه بازی</button>
 </div>
 
-<!-- صفحه لودینگ -->
 <div id="loadingScreen">
   <div id="loadingText">در حال بارگذاری...</div>
   <div id="loadingBar"><div id="loadingBarFill"></div></div>
 </div>
 
-<!-- Canvas بازی -->
 <canvas id="gameCanvas"></canvas>
-
-<!-- کراس‌هیر -->
 <div id="crosshair"></div>
-
-<!-- افکت آسیب -->
 <div id="damageOverlay"></div>
-
-<!-- اطلاعات طبقه -->
 <div id="floorInfo">طبقه ۳۰ — آپارتمان شما</div>
+<div id="gameClock">00:00</div>
 
-<!-- ساعت بازی -->
-<div id="gameClock">۰۰:۰۰</div>
-
-<!-- گوشی هوشمند -->
 <div id="smartphone">
   <div id="phoneScreen">
     <div class="phone-header">📱 پیام‌ها — ناشناس</div>
@@ -186,7 +172,6 @@ body { overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, sans
   </div>
 </div>
 
-<!-- HUD -->
 <div id="hud">
   <div class="hud-label">سلامت</div>
   <div class="hud-bar" id="healthBar"><div class="hud-bar-fill"></div></div>
@@ -194,15 +179,15 @@ body { overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, sans
   <div class="hud-bar" id="staminaBar"><div class="hud-bar-fill"></div></div>
 </div>
 
-<!-- راهنما -->
 <div id="controls">
   WASD — حرکت | Shift — دویدن<br>
   Mouse — نگاه | F — چراغ‌قوه<br>
-  E — تعامل | Tab — کوله‌پشتی<br>
-  H — گوشی | ESC — منو
+  E — تعامل | H — گوشی<br>
+  ESC — منو
 </div>
 
-<!-- Three.js و افزونه‌ها از CDN -->
+<div id="interactionPrompt"></div>
+
 <script type="importmap">
 {
   "imports": {
@@ -228,10 +213,7 @@ let playerState = {
   health: 100, stamina: 100, floor: 30,
   isRunning: false, flashlightOn: true,
   gameStarted: false, gameTime: 0,
-  position: new THREE.Vector3(0, 1.7, 0),
-  rotation: new THREE.Euler(0, 0, 0, 'YXZ'),
-  velocity: new THREE.Vector3(),
-  inCasualClothes: true // شروع با لباس خانگی
+  inCasualClothes: true
 };
 let keys = {};
 let mouseMovement = { x: 0, y: 0 };
@@ -239,9 +221,10 @@ let isPointerLocked = false;
 let flashlight, flashlightTarget;
 let particles = [];
 let phoneMessages = [];
-let gameSaved = false;
+let interactables = [];
+let currentInteractable = null;
 
-// ===== شیدرهای سفارشی =====
+// ===== شیدر سفارشی =====
 const CustomShader = {
   uniforms: {
     tDiffuse: { value: null },
@@ -261,33 +244,27 @@ const CustomShader = {
     uniform float intensity;
     varying vec2 vUv;
     
-    // نویز فیلم
     float random(vec2 st) {
       return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
     }
     
     void main() {
       vec2 uv = vUv;
-      
-      // انحراف رنگی (Chromatic Aberration)
       float dist = distance(uv, vec2(0.5));
-      float aberration = dist * 0.003 * intensity;
+      float aberration = dist * 0.002 * intensity;
       vec4 cr = texture2D(tDiffuse, uv + vec2(aberration, 0.0));
       vec4 cg = texture2D(tDiffuse, uv);
       vec4 cb = texture2D(tDiffuse, uv - vec2(aberration, 0.0));
       vec4 color = vec4(cr.r, cg.g, cb.b, 1.0);
       
-      // نویز فیلم (Film Grain)
-      float grain = random(uv * time) * 0.04 - 0.02;
+      float grain = random(uv * time) * 0.03 - 0.015;
       color.rgb += grain;
       
-      // وینیت (Vignette)
-      float vignette = 1.0 - dist * 0.8;
+      float vignette = 1.0 - dist * 0.6;
       color.rgb *= vignette;
       
-      // کمی کاهش اشباع برای حس سینمایی
       float lum = dot(color.rgb, vec3(0.299, 0.587, 0.114));
-      color.rgb = mix(vec3(lum), color.rgb, 0.85);
+      color.rgb = mix(vec3(lum), color.rgb, 0.88);
       
       gl_FragColor = color;
     }
@@ -296,374 +273,489 @@ const CustomShader = {
 
 // ===== راه‌اندازی موتور =====
 function initEngine() {
-  // رندرر WebGL2
   const canvas = document.getElementById('gameCanvas');
+  
   renderer = new THREE.WebGLRenderer({ 
     canvas, antialias: false, powerPreference: 'high-performance' 
   });
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.8;
+  renderer.toneMappingExposure = 1.2;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.physicallyCorrectLights = true;
 
-  // صحنه
   scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x0a0a15, 0.02);
-  scene.background = new THREE.Color(0x050510);
+  scene.fog = new THREE.FogExp2(0x0a0a15, 0.008);
+  scene.background = new THREE.Color(0x080812);
 
-  // دوربین
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.copy(playerState.position);
-
-  // PMREM برای بازتاب‌ها
-  const pmremGenerator = new THREE.PMREMGenerator(renderer);
-  pmremGenerator.compileEquirectangularShader();
+  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 200);
+  camera.position.set(0, 1.7, 2);
 
   // ===== نورپردازی =====
-  // نور نیم‌کره (آسمان/زمین)
-  const hemiLight = new THREE.HemisphereLight(0x1a1a3e, 0x0a0a0a, 0.3);
+  const hemiLight = new THREE.HemisphereLight(0x2a2a4e, 0x1a1a1a, 0.6);
   scene.add(hemiLight);
 
-  // نور محیطی از پنجره (نور شهر)
-  const windowLight = new THREE.DirectionalLight(0x4466aa, 0.5);
-  windowLight.position.set(10, 5, -10);
-  windowLight.castShadow = true;
-  windowLight.shadow.mapSize.set(4096, 4096);
-  windowLight.shadow.camera.near = 0.1;
-  windowLight.shadow.camera.far = 50;
-  windowLight.shadow.camera.left = -15;
-  windowLight.shadow.camera.right = 15;
-  windowLight.shadow.camera.top = 15;
-  windowLight.shadow.camera.bottom = -15;
-  windowLight.shadow.bias = -0.0001;
-  scene.add(windowLight);
+  const ambientLight = new THREE.AmbientLight(0x1a1a2e, 0.4);
+  scene.add(ambientLight);
 
-  // چراغ‌قوه بازیکن
-  flashlight = new THREE.SpotLight(0xffeedd, 3, 20, Math.PI / 6, 0.5, 1);
+  // نور اصلی سقف آپارتمان
+  const ceilingLight = new THREE.PointLight(0xffeedd, 15, 12);
+  ceilingLight.position.set(0, 2.8, 0);
+  ceilingLight.castShadow = true;
+  ceilingLight.shadow.mapSize.set(2048, 2048);
+  ceilingLight.shadow.bias = -0.001;
+  scene.add(ceilingLight);
+
+  // نور پنجره (نور شهر)
+  const windowLight = new THREE.DirectionalLight(0x4466aa, 1.5);
+  windowLight.position.set(0, 5, -10);
+  windowLight.target.position.set(0, 0, 0);
+  windowLight.castShadow = true;
+  windowLight.shadow.mapSize.set(2048, 2048);
+  windowLight.shadow.camera.near = 0.1;
+  windowLight.shadow.camera.far = 30;
+  windowLight.shadow.camera.left = -10;
+  windowLight.shadow.camera.right = 10;
+  windowLight.shadow.camera.top = 10;
+  windowLight.shadow.camera.bottom = -10;
+  scene.add(windowLight);
+  scene.add(windowLight.target);
+
+  // چراغ‌قوه
+  flashlight = new THREE.SpotLight(0xffeedd, 8, 15, Math.PI / 5, 0.6, 1.5);
   flashlight.castShadow = true;
-  flashlight.shadow.mapSize.set(2048, 2048);
-  flashlight.shadow.bias = -0.0001;
-  flashlight.position.copy(camera.position);
+  flashlight.shadow.mapSize.set(1024, 1024);
+  flashlight.shadow.bias = -0.001;
   scene.add(flashlight);
   
   flashlightTarget = new THREE.Object3D();
-  flashlightTarget.position.set(0, 0, -1);
   scene.add(flashlightTarget);
   flashlight.target = flashlightTarget;
 
   // ===== پس‌پردازش =====
   composer = new EffectComposer(renderer);
   
-  // رندر پایه
   const renderPass = new RenderPass(scene, camera);
   composer.addPass(renderPass);
 
-  // بلوم (درخشش)
   const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.5, 0.4, 0.85
+    0.3, 0.5, 0.9
   );
   composer.addPass(bloomPass);
 
-  // SMAA آنتی‌آلیاسینگ
   const smaaPass = new SMAAPass(window.innerWidth, window.innerHeight);
   composer.addPass(smaaPass);
 
-  // شیدر سفارشی (Chromatic Aberration + Film Grain + Vignette)
   const customPass = new ShaderPass(CustomShader);
   composer.addPass(customPass);
 
-  // Output Pass
   const outputPass = new OutputPass();
   composer.addPass(outputPass);
 
-  // ===== ساخت طبقه ۳۰ =====
+  // ===== ساخت محیط =====
   buildFloor30();
-
-  // ===== ذرات گرد و غبار =====
   createDustParticles();
-
-  // ===== رویدادها =====
   setupEvents();
-
-  // بررسی ذخیره قبلی
   checkSaveData();
 }
 
-// ===== ساخت طبقه ۳۰ (آپارتمان بازیکن) =====
+// ===== ساخت طبقه ۳۰ =====
 function buildFloor30() {
   const floorGroup = new THREE.Group();
-  floorGroup.name = 'floor30';
 
-  // متریال‌های PBR
-  const wallMat = new THREE.MeshPhysicalMaterial({
-    color: 0x8a8a7a, roughness: 0.8, metalness: 0.0,
-    clearcoat: 0.1, clearcoatRoughness: 0.8
+  // متریال‌ها
+  const wallMat = new THREE.MeshStandardMaterial({
+    color: 0x9a9a8a, roughness: 0.85, metalness: 0.0
   });
   
-  const floorMat = new THREE.MeshPhysicalMaterial({
-    color: 0x3a2a1a, roughness: 0.6, metalness: 0.0,
-    clearcoat: 0.3, clearcoatRoughness: 0.4
+  const floorMat = new THREE.MeshStandardMaterial({
+    color: 0x5a4a3a, roughness: 0.7, metalness: 0.0
   });
 
-  const ceilingMat = new THREE.MeshPhysicalMaterial({
-    color: 0x9a9a8a, roughness: 0.9, metalness: 0.0
+  const ceilingMat = new THREE.MeshStandardMaterial({
+    color: 0xaaaaaa, roughness: 0.9, metalness: 0.0
   });
 
   const glassMat = new THREE.MeshPhysicalMaterial({
-    color: 0x88aacc, roughness: 0.0, metalness: 0.1,
-    transmission: 0.9, thickness: 0.1, ior: 1.5,
-    transparent: true, opacity: 0.3
+    color: 0x88aacc, roughness: 0.0, metalness: 0.0,
+    transmission: 0.8, thickness: 0.05, ior: 1.5,
+    transparent: true, opacity: 0.2, side: THREE.DoubleSide
   });
 
-  const furnitureMat = new THREE.MeshPhysicalMaterial({
-    color: 0x2a1a0a, roughness: 0.7, metalness: 0.0,
-    clearcoat: 0.2
+  const furnitureMat = new THREE.MeshStandardMaterial({
+    color: 0x3a2a1a, roughness: 0.75, metalness: 0.0
   });
 
-  const metalMat = new THREE.MeshPhysicalMaterial({
-    color: 0x888888, roughness: 0.3, metalness: 0.8,
-    clearcoat: 0.5
+  const metalMat = new THREE.MeshStandardMaterial({
+    color: 0x888888, roughness: 0.3, metalness: 0.8
   });
 
-  // کف آپارتمان
-  const floor = new THREE.Mesh(new THREE.BoxGeometry(12, 0.2, 10), floorMat);
+  const doorMat = new THREE.MeshStandardMaterial({
+    color: 0x5a4a3a, roughness: 0.6, metalness: 0.1
+  });
+
+  const rugMat = new THREE.MeshStandardMaterial({
+    color: 0x8a2a2a, roughness: 0.95
+  });
+
+  const tvMat = new THREE.MeshStandardMaterial({
+    color: 0x111111, roughness: 0.1, metalness: 0.5
+  });
+
+  const tvScreenMat = new THREE.MeshBasicMaterial({ color: 0x1a2a4a });
+
+  const plantMat = new THREE.MeshStandardMaterial({
+    color: 0x2a6a1a, roughness: 0.8
+  });
+
+  const potMat = new THREE.MeshStandardMaterial({
+    color: 0x8a5a3a, roughness: 0.8
+  });
+
+  const fridgeMat = new THREE.MeshStandardMaterial({
+    color: 0xcccccc, roughness: 0.2, metalness: 0.7
+  });
+
+  // کف
+  const floor = new THREE.Mesh(new THREE.BoxGeometry(12, 0.15, 10), floorMat);
   floor.position.set(0, 0, 0);
   floor.receiveShadow = true;
   floorGroup.add(floor);
 
   // سقف
-  const ceiling = new THREE.Mesh(new THREE.BoxGeometry(12, 0.2, 10), ceilingMat);
+  const ceiling = new THREE.Mesh(new THREE.BoxGeometry(12, 0.15, 10), ceilingMat);
   ceiling.position.set(0, 3, 0);
   ceiling.receiveShadow = true;
   floorGroup.add(ceiling);
 
-  // دیوارها
-  const walls = [
-    { pos: [0, 1.5, -5], size: [12, 3, 0.2] },   // پشت
-    { pos: [0, 1.5, 5], size: [12, 3, 0.2] },     // جلو
-    { pos: [-6, 1.5, 0], size: [0.2, 3, 10] },    // چپ
-    { pos: [6, 1.5, 0], size: [0.2, 3, 10] },     // راست
-  ];
+  // دیوار پشت (با پنجره)
+  // بخش چپ پنجره
+  const wallBackLeft = new THREE.Mesh(new THREE.BoxGeometry(3.5, 3, 0.2), wallMat);
+  wallBackLeft.position.set(-4.25, 1.5, -5);
+  wallBackLeft.castShadow = true; wallBackLeft.receiveShadow = true;
+  floorGroup.add(wallBackLeft);
 
-  walls.forEach(w => {
-    const wall = new THREE.Mesh(new THREE.BoxGeometry(...w.size), wallMat);
-    wall.position.set(...w.pos);
-    wall.castShadow = true;
-    wall.receiveShadow = true;
-    floorGroup.add(wall);
-  });
+  // بخش راست پنجره
+  const wallBackRight = new THREE.Mesh(new THREE.BoxGeometry(3.5, 3, 0.2), wallMat);
+  wallBackRight.position.set(4.25, 1.5, -5);
+  wallBackRight.castShadow = true; wallBackRight.receiveShadow = true;
+  floorGroup.add(wallBackRight);
 
-  // پنجره بزرگ (نمای شهر)
-  const windowFrame = new THREE.Mesh(new THREE.BoxGeometry(4, 2.5, 0.1), metalMat);
-  windowFrame.position.set(0, 1.5, -4.9);
-  floorGroup.add(windowFrame);
+  // بالای پنجره
+  const wallBackTop = new THREE.Mesh(new THREE.BoxGeometry(5, 0.5, 0.2), wallMat);
+  wallBackTop.position.set(0, 2.75, -5);
+  floorGroup.add(wallBackTop);
 
-  const windowGlass = new THREE.Mesh(new THREE.BoxGeometry(3.8, 2.3, 0.05), glassMat);
-  windowGlass.position.set(0, 1.5, -4.95);
+  // زیر پنجره
+  const wallBackBottom = new THREE.Mesh(new THREE.BoxGeometry(5, 0.5, 0.2), wallMat);
+  wallBackBottom.position.set(0, 0.25, -5);
+  floorGroup.add(wallBackBottom);
+
+  // شیشه پنجره
+  const windowGlass = new THREE.Mesh(new THREE.BoxGeometry(4.8, 2, 0.05), glassMat);
+  windowGlass.position.set(0, 1.5, -5);
   floorGroup.add(windowGlass);
 
-  // مبلمان - مبل
-  const sofa = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.8, 1), furnitureMat);
-  sofa.position.set(-3, 0.5, 2);
-  sofa.castShadow = true;
-  sofa.receiveShadow = true;
-  floorGroup.add(sofa);
+  // قاب پنجره
+  const frameMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.4, metalness: 0.6 });
+  const frameH = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.08, 0.25), frameMat);
+  frameH.position.set(0, 2.5, -5);
+  floorGroup.add(frameH);
+  const frameH2 = frameH.clone();
+  frameH2.position.y = 0.5;
+  floorGroup.add(frameH2);
+  const frameV = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.1, 0.25), frameMat);
+  frameV.position.set(0, 1.5, -5);
+  floorGroup.add(frameV);
 
-  const sofaBack = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.6, 0.2), furnitureMat);
-  sofaBack.position.set(-3, 1.0, 2.5);
+  // دیوار جلو (با درب)
+  const wallFrontLeft = new THREE.Mesh(new THREE.BoxGeometry(5, 3, 0.2), wallMat);
+  wallFrontLeft.position.set(-3.5, 1.5, 5);
+  wallFrontLeft.castShadow = true; wallFrontLeft.receiveShadow = true;
+  floorGroup.add(wallFrontLeft);
+
+  const wallFrontRight = new THREE.Mesh(new THREE.BoxGeometry(5, 3, 0.2), wallMat);
+  wallFrontRight.position.set(3.5, 1.5, 5);
+  wallFrontRight.castShadow = true; wallFrontRight.receiveShadow = true;
+  floorGroup.add(wallFrontRight);
+
+  const wallFrontTop = new THREE.Mesh(new THREE.BoxGeometry(2, 0.8, 0.2), wallMat);
+  wallFrontTop.position.set(0, 2.6, 5);
+  floorGroup.add(wallFrontTop);
+
+  // درب
+  const door = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.2, 0.1), doorMat);
+  door.position.set(0, 1.1, 5);
+  door.castShadow = true;
+  floorGroup.add(door);
+
+  const doorHandle = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), metalMat);
+  doorHandle.position.set(0.4, 1.1, 5.08);
+  floorGroup.add(doorHandle);
+
+  // دیوار چپ
+  const wallLeft = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3, 10), wallMat);
+  wallLeft.position.set(-6, 1.5, 0);
+  wallLeft.castShadow = true; wallLeft.receiveShadow = true;
+  floorGroup.add(wallLeft);
+
+  // دیوار راست
+  const wallRight = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3, 10), wallMat);
+  wallRight.position.set(6, 1.5, 0);
+  wallRight.castShadow = true; wallRight.receiveShadow = true;
+  floorGroup.add(wallRight);
+
+  // ===== مبلمان =====
+  
+  // مبل
+  const sofaSeat = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.4, 0.9), furnitureMat);
+  sofaSeat.position.set(-3.5, 0.3, 2.5);
+  sofaSeat.castShadow = true; sofaSeat.receiveShadow = true;
+  floorGroup.add(sofaSeat);
+
+  const sofaBack = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.5, 0.15), furnitureMat);
+  sofaBack.position.set(-3.5, 0.65, 2.95);
   sofaBack.castShadow = true;
   floorGroup.add(sofaBack);
 
-  // میز
-  const table = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.05, 0.8), furnitureMat);
-  table.position.set(-3, 0.7, 0.5);
-  table.castShadow = true;
-  table.receiveShadow = true;
-  floorGroup.add(table);
+  const sofaArmL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.4, 0.9), furnitureMat);
+  sofaArmL.position.set(-4.55, 0.5, 2.5);
+  sofaArmL.castShadow = true;
+  floorGroup.add(sofaArmL);
 
-  const tableLegs = [
-    [-3.6, 0.35, 0.2], [-3.6, 0.35, 0.8],
-    [-2.4, 0.35, 0.2], [-2.4, 0.35, 0.8]
-  ];
-  tableLegs.forEach(pos => {
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.7), metalMat);
+  const sofaArmR = sofaArmL.clone();
+  sofaArmR.position.x = -2.45;
+  floorGroup.add(sofaArmR);
+
+  // کوسن‌ها
+  const cushionMat = new THREE.MeshStandardMaterial({ color: 0x6a3a2a, roughness: 0.9 });
+  const cushion1 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.35, 0.1), cushionMat);
+  cushion1.position.set(-4.0, 0.7, 2.5);
+  cushion1.rotation.z = 0.15;
+  floorGroup.add(cushion1);
+  const cushion2 = cushion1.clone();
+  cushion2.position.x = -3.0;
+  cushion2.rotation.z = -0.1;
+  floorGroup.add(cushion2);
+
+  // میز جلو مبل
+  const tableTop = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.06, 0.7), furnitureMat);
+  tableTop.position.set(-3.5, 0.55, 0.8);
+  tableTop.castShadow = true; tableTop.receiveShadow = true;
+  floorGroup.add(tableTop);
+
+  const legGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.55, 8);
+  [[-4.05, 0.275, 0.5], [-4.05, 0.275, 1.1], [-2.95, 0.275, 0.5], [-2.95, 0.275, 1.1]].forEach(pos => {
+    const leg = new THREE.Mesh(legGeo, metalMat);
     leg.position.set(...pos);
     leg.castShadow = true;
     floorGroup.add(leg);
   });
 
+  // ماگ روی میز
+  const mugMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.3 });
+  const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.035, 0.1, 8), mugMat);
+  mug.position.set(-3.3, 0.63, 0.9);
+  mug.castShadow = true;
+  floorGroup.add(mug);
+
   // تلویزیون
-  const tv = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1, 0.05), new THREE.MeshPhysicalMaterial({
-    color: 0x111111, roughness: 0.1, metalness: 0.5, clearcoat: 1.0
-  }));
-  tv.position.set(3, 1.2, -4.5);
+  const tvStand = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.5, 0.4), furnitureMat);
+  tvStand.position.set(3.5, 0.25, -4.2);
+  tvStand.castShadow = true; tvStand.receiveShadow = true;
+  floorGroup.add(tvStand);
+
+  const tv = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.9, 0.06), tvMat);
+  tv.position.set(3.5, 1.0, -4.3);
   tv.castShadow = true;
   floorGroup.add(tv);
 
-  // صفحه تلویزیون (نور ضعیف)
-  const tvScreen = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.9, 0.01), 
-    new THREE.MeshBasicMaterial({ color: 0x112233 }));
-  tvScreen.position.set(3, 1.2, -4.47);
+  const tvScreen = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.8, 0.02), tvScreenMat);
+  tvScreen.position.set(3.5, 1.0, -4.26);
   floorGroup.add(tvScreen);
 
-  // نور تلویزیون
-  const tvLight = new THREE.PointLight(0x2244aa, 0.5, 5);
-  tvLight.position.set(3, 1.2, -4);
+  const tvLight = new THREE.PointLight(0x2244aa, 2, 4);
+  tvLight.position.set(3.5, 1.0, -3.8);
   floorGroup.add(tvLight);
 
   // کابینت آشپزخانه
-  const cabinet = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 0.6), furnitureMat);
-  cabinet.position.set(4, 1, 3);
-  cabinet.castShadow = true;
-  cabinet.receiveShadow = true;
+  const cabinet = new THREE.Mesh(new THREE.BoxGeometry(2, 1.8, 0.5), furnitureMat);
+  cabinet.position.set(4.5, 0.9, 3.5);
+  cabinet.castShadow = true; cabinet.receiveShadow = true;
   floorGroup.add(cabinet);
+  interactables.push({ mesh: cabinet, type: 'cabinet', label: 'جستجوی کابینت [E]' });
 
   // یخچال
-  const fridge = new THREE.Mesh(new THREE.BoxGeometry(0.8, 2, 0.7), metalMat);
-  fridge.position.set(5.3, 1, 3);
-  fridge.castShadow = true;
+  const fridge = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.8, 0.6), fridgeMat);
+  fridge.position.set(5.5, 0.9, 3.5);
+  fridge.castShadow = true; fridge.receiveShadow = true;
   floorGroup.add(fridge);
+  interactables.push({ mesh: fridge, type: 'fridge', label: 'باز کردن یخچال [E]' });
 
   // چراغ سقفی
-  const ceilingLight = new THREE.PointLight(0xffeedd, 0.8, 8);
-  ceilingLight.position.set(0, 2.8, 0);
-  ceilingLight.castShadow = true;
-  floorGroup.add(ceilingLight);
+  const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 0.08, 16), metalMat);
+  lampBase.position.set(0, 2.96, 0);
+  floorGroup.add(lampBase);
 
-  const lampFixture = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.3, 0.3, 0.1, 16),
-    metalMat
-  );
-  lampFixture.position.set(0, 2.9, 0);
-  floorGroup.add(lampFixture);
+  const lampShade = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.35, 0.2, 16),
+    new THREE.MeshStandardMaterial({ color: 0xddddcc, roughness: 0.5, side: THREE.DoubleSide }));
+  lampShade.position.set(0, 2.85, 0);
+  floorGroup.add(lampShade);
 
-  // درب ورودی
-  const door = new THREE.Mesh(new THREE.BoxGeometry(1, 2.2, 0.1), 
-    new THREE.MeshPhysicalMaterial({ color: 0x4a3a2a, roughness: 0.6, metalness: 0.1 }));
-  door.position.set(0, 1.1, 4.9);
-  door.castShadow = true;
-  floorGroup.add(door);
-
-  const doorHandle = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), metalMat);
-  doorHandle.position.set(0.35, 1.1, 4.95);
-  floorGroup.add(doorHandle);
+  const lampBulb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8),
+    new THREE.MeshBasicMaterial({ color: 0xffeedd }));
+  lampBulb.position.set(0, 2.78, 0);
+  floorGroup.add(lampBulb);
 
   // فرش
-  const rug = new THREE.Mesh(new THREE.BoxGeometry(3, 0.02, 2), 
-    new THREE.MeshPhysicalMaterial({ color: 0x8a2a2a, roughness: 0.9 }));
-  rug.position.set(-1, 0.11, 1);
+  const rug = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.02, 1.8), rugMat);
+  rug.position.set(-1, 0.08, 1);
   rug.receiveShadow = true;
   floorGroup.add(rug);
 
   // گلدان
-  const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.3, 8), 
-    new THREE.MeshPhysicalMaterial({ color: 0x8a4a2a, roughness: 0.8 }));
-  pot.position.set(2, 0.25, -3);
+  const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.25, 8), potMat);
+  pot.position.set(2, 0.125, -3.5);
   pot.castShadow = true;
   floorGroup.add(pot);
 
-  const plant = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8),
-    new THREE.MeshPhysicalMaterial({ color: 0x2a5a1a, roughness: 0.8 }));
-  plant.position.set(2, 0.5, -3);
+  const plant = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), plantMat);
+  plant.position.set(2, 0.38, -3.5);
   plant.castShadow = true;
   floorGroup.add(plant);
 
-  // نمای شهر از پنجره (ساختمان‌های دور)
+  // کتابخانه
+  const bookshelf = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2, 0.3), furnitureMat);
+  bookshelf.position.set(-5.7, 1, -2);
+  bookshelf.castShadow = true; bookshelf.receiveShadow = true;
+  floorGroup.add(bookshelf);
+
+  // کتاب‌ها
+  const bookColors = [0xaa2222, 0x2222aa, 0x22aa22, 0xaaaa22, 0x882288];
+  for (let i = 0; i < 5; i++) {
+    const book = new THREE.Mesh(
+      new THREE.BoxGeometry(0.15, 0.25 + Math.random() * 0.1, 0.2),
+      new THREE.MeshStandardMaterial({ color: bookColors[i], roughness: 0.8 })
+    );
+    book.position.set(-5.55 + i * 0.2, 1.5 + Math.random() * 0.3, -2);
+    book.rotation.z = (Math.random() - 0.5) * 0.1;
+    floorGroup.add(book);
+  }
+
+  // نمای شهر
   createCityView(floorGroup);
 
   scene.add(floorGroup);
 }
 
-// ===== نمای شهر از پنجره =====
+// ===== نمای شهر =====
 function createCityView(parent) {
-  const buildingMat = new THREE.MeshPhysicalMaterial({
+  const buildingMat = new THREE.MeshStandardMaterial({
     color: 0x1a1a2a, roughness: 0.7, metalness: 0.3
   });
 
-  for (let i = 0; i < 20; i++) {
-    const h = 2 + Math.random() * 8;
-    const w = 0.5 + Math.random() * 1.5;
-    const d = 0.5 + Math.random() * 1.5;
+  for (let i = 0; i < 30; i++) {
+    const h = 3 + Math.random() * 12;
+    const w = 1 + Math.random() * 2;
+    const d = 1 + Math.random() * 2;
     const building = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), buildingMat);
     building.position.set(
-      -15 + Math.random() * 30,
-      -h/2 - 2,
-      -20 - Math.random() * 30
+      -20 + Math.random() * 40,
+      -h/2 - 3,
+      -25 - Math.random() * 40
     );
     building.castShadow = true;
     parent.add(building);
 
-    // پنجره‌های روشن در ساختمان‌ها
-    if (Math.random() > 0.5) {
-      const winLight = new THREE.PointLight(0xffaa44, 0.3, 3);
+    if (Math.random() > 0.4) {
+      const winLight = new THREE.PointLight(0xffaa44, 1, 4);
       winLight.position.set(
         building.position.x,
         building.position.y + h * 0.3,
-        building.position.z + d/2 + 0.1
+        building.position.z + d/2 + 0.2
       );
       parent.add(winLight);
     }
   }
 
-  // آسمان شب
-  const skyGeo = new THREE.SphereGeometry(100, 32, 32);
-  const skyMat = new THREE.MeshBasicMaterial({
-    color: 0x050515, side: THREE.BackSide
-  });
+  // آسمان
+  const skyGeo = new THREE.SphereGeometry(120, 32, 32);
+  const skyMat = new THREE.MeshBasicMaterial({ color: 0x050515, side: THREE.BackSide });
   const sky = new THREE.Mesh(skyGeo, skyMat);
   parent.add(sky);
 
   // ماه
-  const moon = new THREE.Mesh(new THREE.SphereGeometry(2, 16, 16),
+  const moon = new THREE.Mesh(new THREE.SphereGeometry(3, 16, 16),
     new THREE.MeshBasicMaterial({ color: 0xeeeedd }));
-  moon.position.set(20, 30, -50);
+  moon.position.set(25, 35, -60);
   parent.add(moon);
 
-  // نور ماه
-  const moonLight = new THREE.DirectionalLight(0x4466aa, 0.2);
-  moonLight.position.set(20, 30, -50);
-  parent.add(moonLight);
+  // ستاره‌ها
+  const starsGeo = new THREE.BufferGeometry();
+  const starPositions = [];
+  for (let i = 0; i < 200; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.random() * Math.PI * 0.5;
+    const r = 100;
+    starPositions.push(
+      r * Math.sin(phi) * Math.cos(theta),
+      r * Math.cos(phi) + 20,
+      r * Math.sin(phi) * Math.sin(theta) - 30
+    );
+  }
+  starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+  const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.3 });
+  parent.add(new THREE.Points(starsGeo, starsMat));
 }
 
 // ===== ذرات گرد و غبار =====
 function createDustParticles() {
-  const particleCount = 500;
+  const count = 300;
   const geometry = new THREE.BufferGeometry();
-  const positions = new Float32Array(particleCount * 3);
+  const positions = new Float32Array(count * 3);
   const velocities = [];
 
-  for (let i = 0; i < particleCount; i++) {
-    positions[i * 3] = (Math.random() - 0.5) * 12;
-    positions[i * 3 + 1] = Math.random() * 3;
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+  for (let i = 0; i < count; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 10;
+    positions[i * 3 + 1] = 0.2 + Math.random() * 2.6;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 8;
     velocities.push({
-      x: (Math.random() - 0.5) * 0.002,
+      x: (Math.random() - 0.5) * 0.003,
       y: (Math.random() - 0.5) * 0.001,
-      z: (Math.random() - 0.5) * 0.002
+      z: (Math.random() - 0.5) * 0.003
     });
   }
 
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
   const material = new THREE.PointsMaterial({
-    color: 0xffffff, size: 0.02, transparent: true, opacity: 0.3,
-    blending: THREE.AdditiveBlending
+    color: 0xffffff, size: 0.015, transparent: true, opacity: 0.4,
+    blending: THREE.AdditiveBlending, depthWrite: false
   });
 
-  const particleSystem = new THREE.Points(geometry, material);
-  particleSystem.userData.velocities = velocities;
-  scene.add(particleSystem);
-  particles.push(particleSystem);
+  const ps = new THREE.Points(geometry, material);
+  ps.userData.velocities = velocities;
+  scene.add(ps);
+  particles.push(ps);
 }
 
-// ===== سیستم رویدادها =====
+// ===== رویدادها =====
 function setupEvents() {
-  document.addEventListener('keydown', e => { keys[e.code] = true; });
+  document.addEventListener('keydown', e => { 
+    keys[e.code] = true; 
+    if (e.code === 'KeyF' && playerState.gameStarted) {
+      playerState.flashlightOn = !playerState.flashlightOn;
+    }
+    if (e.code === 'KeyH' && playerState.gameStarted) {
+      document.getElementById('smartphone').classList.toggle('active');
+    }
+    if (e.code === 'KeyE' && currentInteractable) {
+      handleInteraction(currentInteractable);
+    }
+  });
   document.addEventListener('keyup', e => { keys[e.code] = false; });
   
   document.addEventListener('mousemove', e => {
@@ -691,7 +783,17 @@ function setupEvents() {
   });
 }
 
-// ===== بررسی داده ذخیره =====
+// ===== تعامل =====
+function handleInteraction(item) {
+  if (item.type === 'cabinet') {
+    addPhoneMessage('سیستم', 'کابینت خالی است. چیزی پیدا نشد.');
+  } else if (item.type === 'fridge') {
+    addPhoneMessage('سیستم', 'یخچال تقریباً خالی است. یک بطری آب پیدا کردی!');
+    playerState.health = Math.min(100, playerState.health + 5);
+  }
+}
+
+// ===== بررسی ذخیره =====
 function checkSaveData() {
   const saveData = localStorage.getItem('tower30_save');
   if (saveData) {
@@ -711,12 +813,14 @@ window.startNewGame = function() {
     playerState.stamina = 100;
     playerState.floor = 30;
     playerState.gameTime = 0;
+    camera.position.set(0, 1.7, 2);
     
     document.getElementById('gameCanvas').requestPointerLock();
-    addPhoneMessage('ناشناس', 'بیدار شو... وقت نداریم. برق تا ۴ ساعت دیگه قطع میشه.');
-    setTimeout(() => addPhoneMessage('ناشناس', 'سگت شرمَن کنارته. مراقبش باش.'), 3000);
-    setTimeout(() => addPhoneMessage('ناشناس', 'از پله‌ها بیا پایین. طبقه به طبقه. مراقب صدا باش.'), 6000);
-    setTimeout(() => addPhoneMessage('ناشناس', 'لباس رزمیت توی کمد اتاق خوابه. عجله کن.'), 9000);
+    
+    setTimeout(() => addPhoneMessage('ناشناس', 'بیدار شو... وقت نداریم. برق تا ۴ ساعت دیگه قطع میشه.'), 1000);
+    setTimeout(() => addPhoneMessage('ناشناس', 'سگت شرمَن کنارته. مراقبش باش.'), 4000);
+    setTimeout(() => addPhoneMessage('ناشناس', 'از پله‌ها بیا پایین. طبقه به طبقه. مراقب صدا باش.'), 7000);
+    setTimeout(() => addPhoneMessage('ناشناس', 'لباس رزمیت توی کمد اتاق خوابه. عجله کن.'), 10000);
     
     hideLoading();
   }, 2000);
@@ -726,15 +830,20 @@ window.startNewGame = function() {
 window.continueGame = function() {
   const saveData = JSON.parse(localStorage.getItem('tower30_save'));
   if (saveData) {
-    playerState = { ...playerState, ...saveData };
-    playerState.position = new THREE.Vector3(...saveData.position);
-    playerState.velocity = new THREE.Vector3(...saveData.velocity);
+    playerState.health = saveData.health || 100;
+    playerState.stamina = saveData.stamina || 100;
+    playerState.floor = saveData.floor || 30;
+    playerState.gameTime = saveData.gameTime || 0;
+    playerState.inCasualClothes = saveData.inCasualClothes !== undefined ? saveData.inCasualClothes : true;
+    if (saveData.position) {
+      camera.position.set(saveData.position[0], saveData.position[1], saveData.position[2]);
+    }
   }
   document.getElementById('startMenu').style.display = 'none';
   playerState.gameStarted = true;
   document.getElementById('gameCanvas').requestPointerLock();
   document.getElementById('floorInfo').textContent = `طبقه ${playerState.floor}`;
-}
+};
 
 // ===== لودینگ =====
 function showLoading() {
@@ -742,27 +851,22 @@ function showLoading() {
   ls.style.display = 'flex';
   let progress = 0;
   const interval = setInterval(() => {
-    progress += Math.random() * 15;
-    if (progress >= 100) {
-      progress = 100;
-      clearInterval(interval);
-    }
+    progress += Math.random() * 20;
+    if (progress >= 100) { progress = 100; clearInterval(interval); }
     document.getElementById('loadingBarFill').style.width = progress + '%';
-  }, 200);
+  }, 150);
 }
 
 function hideLoading() {
   setTimeout(() => {
     document.getElementById('loadingScreen').style.display = 'none';
-  }, 500);
+  }, 400);
 }
 
 // ===== پیام گوشی =====
 function addPhoneMessage(sender, text) {
   const now = new Date();
   const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-  
-  phoneMessages.push({ sender, text, time: timeStr });
   
   const msgDiv = document.createElement('div');
   msgDiv.className = 'phone-msg';
@@ -773,32 +877,24 @@ function addPhoneMessage(sender, text) {
   container.scrollTop = container.scrollHeight;
   
   document.getElementById('phoneTime').textContent = timeStr;
-  
-  // نمایش گوشی
   document.getElementById('smartphone').classList.add('active');
-  setTimeout(() => {
-    if (!keys['KeyH']) {
-      document.getElementById('smartphone').classList.remove('active');
-    }
-  }, 5000);
 }
 
 // ===== به‌روزرسانی بازیکن =====
 function updatePlayer(delta) {
   if (!playerState.gameStarted) return;
 
-  // چرخش دوربین
   const sensitivity = 0.002;
+  playerState.rotation = playerState.rotation || new THREE.Euler(0, 0, 0, 'YXZ');
   playerState.rotation.y -= mouseMovement.x * sensitivity;
   playerState.rotation.x -= mouseMovement.y * sensitivity;
-  playerState.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, playerState.rotation.x));
+  playerState.rotation.x = Math.max(-Math.PI/2.2, Math.min(Math.PI/2.2, playerState.rotation.x));
   mouseMovement.x = 0;
   mouseMovement.y = 0;
 
   camera.rotation.copy(playerState.rotation);
 
-  // حرکت
-  const speed = keys['ShiftLeft'] ? 8 : 4;
+  const speed = (keys['ShiftLeft'] && playerState.stamina > 0) ? 6 : 3.5;
   const direction = new THREE.Vector3();
   
   if (keys['KeyW']) direction.z -= 1;
@@ -809,74 +905,86 @@ function updatePlayer(delta) {
   direction.normalize();
   direction.applyEuler(new THREE.Euler(0, playerState.rotation.y, 0));
   
-  playerState.velocity.x = direction.x * speed;
-  playerState.velocity.z = direction.z * speed;
+  camera.position.x += direction.x * speed * delta;
+  camera.position.z += direction.z * speed * delta;
 
-  // اعمال حرکت
-  camera.position.x += playerState.velocity.x * delta;
-  camera.position.z += playerState.velocity.z * delta;
-
-  // محدودیت حرکت در آپارتمان
+  // محدودیت
   camera.position.x = Math.max(-5.5, Math.min(5.5, camera.position.x));
   camera.position.z = Math.max(-4.5, Math.min(4.5, camera.position.z));
-  camera.position.y = 1.7;
 
-  // Camera Bob هنگام حرکت
+  // Camera Bob
   if (direction.length() > 0) {
-    const bobSpeed = keys['ShiftLeft'] ? 12 : 8;
-    const bobAmount = keys['ShiftLeft'] ? 0.05 : 0.03;
-    camera.position.y += Math.sin(clock.elapsedTime * bobSpeed) * bobAmount;
+    const bobSpeed = keys['ShiftLeft'] ? 10 : 7;
+    const bobAmount = keys['ShiftLeft'] ? 0.04 : 0.025;
+    camera.position.y = 1.7 + Math.sin(clock.elapsedTime * bobSpeed) * bobAmount;
+  } else {
+    camera.position.y = 1.7;
   }
 
   // استامینا
   if (keys['ShiftLeft'] && direction.length() > 0) {
-    playerState.stamina = Math.max(0, playerState.stamina - 20 * delta);
-    playerState.isRunning = true;
+    playerState.stamina = Math.max(0, playerState.stamina - 15 * delta);
   } else {
-    playerState.stamina = Math.min(100, playerState.stamina + 10 * delta);
-    playerState.isRunning = false;
+    playerState.stamina = Math.min(100, playerState.stamina + 12 * delta);
   }
 
   // چراغ‌قوه
-  if (keys['KeyF']) {
-    playerState.flashlightOn = !playerState.flashlightOn;
-    keys['KeyF'] = false;
-  }
-  
   flashlight.visible = playerState.flashlightOn;
-  flashlight.position.copy(camera.position);
-  flashlightTarget.position.copy(camera.position);
-  flashlightTarget.position.add(new THREE.Vector3(
-    Math.sin(playerState.rotation.y) * Math.cos(playerState.rotation.x),
-    Math.sin(playerState.rotation.x),
-    -Math.cos(playerState.rotation.y) * Math.cos(playerState.rotation.x)
-  ).multiplyScalar(5));
-
-  // گوشی
-  if (keys['KeyH']) {
-    document.getElementById('smartphone').classList.add('active');
-  } else {
-    document.getElementById('smartphone').classList.remove('active');
+  if (playerState.flashlightOn) {
+    flashlight.position.copy(camera.position);
+    const dir = new THREE.Vector3(0, 0, -1);
+    dir.applyQuaternion(camera.quaternion);
+    flashlightTarget.position.copy(camera.position).add(dir.multiplyScalar(5));
   }
 
-  // به‌روزرسانی HUD
+  // بررسی تعامل
+  checkInteractions();
+
+  // HUD
   document.querySelector('#healthBar .hud-bar-fill').style.width = playerState.health + '%';
   document.querySelector('#staminaBar .hud-bar-fill').style.width = playerState.stamina + '%';
 
-  // ساعت بازی
+  // ساعت
   playerState.gameTime += delta;
   const mins = Math.floor(playerState.gameTime / 60);
   const secs = Math.floor(playerState.gameTime % 60);
   document.getElementById('gameClock').textContent = 
     `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
 
-  // ذخیره خودکار هر ۳۰ ثانیه
-  if (Math.floor(playerState.gameTime) % 30 === 0 && Math.floor(playerState.gameTime) > 0) {
+  // ذخیره
+  if (Math.floor(playerState.gameTime) > 0 && Math.floor(playerState.gameTime) % 30 === 0) {
     saveGame();
   }
 }
 
-// ===== ذخیره بازی =====
+// ===== بررسی تعامل =====
+function checkInteractions() {
+  const raycaster = new THREE.Raycaster();
+  const center = new THREE.Vector2(0, 0);
+  raycaster.setFromCamera(center, camera);
+  
+  let found = null;
+  let minDist = 3;
+  
+  interactables.forEach(item => {
+    const intersects = raycaster.intersectObject(item.mesh);
+    if (intersects.length > 0 && intersects[0].distance < minDist) {
+      found = item;
+      minDist = intersects[0].distance;
+    }
+  });
+  
+  currentInteractable = found;
+  const prompt = document.getElementById('interactionPrompt');
+  if (found) {
+    prompt.textContent = found.label;
+    prompt.style.opacity = '1';
+  } else {
+    prompt.style.opacity = '0';
+  }
+}
+
+// ===== ذخیره =====
 function saveGame() {
   const saveData = {
     health: playerState.health,
@@ -884,12 +992,9 @@ function saveGame() {
     floor: playerState.floor,
     gameTime: playerState.gameTime,
     inCasualClothes: playerState.inCasualClothes,
-    position: [camera.position.x, camera.position.y, camera.position.z],
-    velocity: [playerState.velocity.x, playerState.velocity.y, playerState.velocity.z],
-    rotation: [playerState.rotation.x, playerState.rotation.y, playerState.rotation.z]
+    position: [camera.position.x, camera.position.y, camera.position.z]
   };
   localStorage.setItem('tower30_save', JSON.stringify(saveData));
-  gameSaved = true;
 }
 
 // ===== به‌روزرسانی ذرات =====
@@ -903,17 +1008,16 @@ function updateParticles(delta) {
       positions[i * 3 + 1] += vels[i].y;
       positions[i * 3 + 2] += vels[i].z;
       
-      // بازگرداندن ذرات به محدوده
-      if (Math.abs(positions[i * 3]) > 6) positions[i * 3] *= -0.9;
-      if (positions[i * 3 + 1] > 3 || positions[i * 3 + 1] < 0) vels[i].y *= -1;
-      if (Math.abs(positions[i * 3 + 2]) > 5) positions[i * 3 + 2] *= -0.9;
+      if (Math.abs(positions[i * 3]) > 5.5) positions[i * 3] *= -0.9;
+      if (positions[i * 3 + 1] > 2.8 || positions[i * 3 + 1] < 0.1) vels[i].y *= -1;
+      if (Math.abs(positions[i * 3 + 2]) > 4.5) positions[i * 3 + 2] *= -0.9;
     }
     
     ps.geometry.attributes.position.needsUpdate = true;
   });
 }
 
-// ===== حلقه اصلی بازی =====
+// ===== حلقه اصلی =====
 function animate() {
   requestAnimationFrame(animate);
   
@@ -922,7 +1026,6 @@ function animate() {
   updatePlayer(delta);
   updateParticles(delta);
   
-  // به‌روزرسانی شیدر سفارشی
   composer.passes.forEach(pass => {
     if (pass.uniforms && pass.uniforms.time) {
       pass.uniforms.time.value = clock.elapsedTime;
