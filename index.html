@@ -1,987 +1,645 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>جزیره نجات | Survival Island</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #020617; font-family: Tahoma, 'Segoe UI', sans-serif; color: #e2e8f0; }
-    #c { display: block; width: 100%; height: 100%; position: absolute; inset: 0; }
-
-    .glass {
-      background: rgba(15, 23, 42, 0.72);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 14px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    }
-
-    #hud {
-      position: absolute; top: 16px; left: 16px; right: 16px;
-      display: flex; justify-content: space-between; align-items: flex-start;
-      pointer-events: none; z-index: 20;
-    }
-    .bars { width: 220px; display: flex; flex-direction: column; gap: 8px; }
-    .bar-row { display: flex; align-items: center; gap: 8px; }
-    .bar-icon { width: 22px; text-align: center; font-size: 15px; }
-    .bar-bg { flex: 1; height: 12px; background: rgba(0,0,0,0.5); border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
-    .bar-fill { height: 100%; border-radius: 6px; transition: width 0.2s; }
-    #hp-fill { background: linear-gradient(90deg, #dc2626, #f87171); }
-    #hunger-fill { background: linear-gradient(90deg, #ea580c, #fb923c); }
-    #stamina-fill { background: linear-gradient(90deg, #ca8a04, #facc15); }
-
-    #time-box { padding: 8px 14px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
-
-    #crosshair {
-      position: absolute; top: 50%; left: 50%; width: 14px; height: 14px;
-      transform: translate(-50%, -50%); pointer-events: none; z-index: 15;
-    }
-    #crosshair::before, #crosshair::after { content: ''; position: absolute; background: rgba(255,255,255,0.9); }
-    #crosshair::before { width: 2px; height: 14px; left: 6px; top: 0; }
-    #crosshair::after { width: 14px; height: 2px; top: 6px; left: 0; }
-
-    #inv, #craft {
-      position: absolute; z-index: 40; pointer-events: auto; display: none;
-    }
-    #inv.open, #craft.open { display: block; }
-    #inv {
-      bottom: 24px; left: 50%; transform: translateX(-50%);
-      padding: 16px; min-width: 340px;
-    }
-    #craft {
-      top: 50%; right: 20px; transform: translateY(-50%);
-      width: 290px; padding: 16px;
-    }
-    .panel-title { text-align: center; color: #94a3b8; font-size: 13px; margin-bottom: 12px; }
-    .grid { display: grid; grid-template-columns: repeat(5, 58px); gap: 7px; justify-content: center; }
-    .slot {
-      width: 58px; height: 58px; background: rgba(30,41,59,0.8);
-      border: 1px solid rgba(255,255,255,0.1); border-radius: 9px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      position: relative; cursor: default; user-select: none;
-    }
-    .slot:hover { border-color: #60a5fa; }
-    .slot .ic { font-size: 22px; }
-    .slot .ct { position: absolute; bottom: 2px; right: 4px; font-size: 11px; font-weight: 700; }
-    .slot.empty { opacity: 0.3; }
-    .slot.clickable { cursor: pointer; }
-    .slot.clickable:hover { background: rgba(51,65,85,0.95); transform: scale(1.05); }
-
-    .recipe {
-      padding: 10px; margin-bottom: 8px; background: rgba(30,41,59,0.7);
-      border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);
-      cursor: pointer; transition: 0.15s;
-    }
-    .recipe:hover { border-color: #34d399; background: rgba(6,78,59,0.4); }
-    .recipe.off { opacity: 0.4; cursor: not-allowed; }
-    .recipe.off:hover { border-color: rgba(255,255,255,0.08); background: rgba(30,41,59,0.7); }
-    .r-name { font-weight: 600; margin-bottom: 4px; font-size: 13px; }
-    .r-cost { font-size: 11px; color: #94a3b8; }
-    .ok { color: #34d399; }
-    .no { color: #f87171; }
-
-    #notes {
-      position: absolute; top: 80px; left: 50%; transform: translateX(-50%);
-      z-index: 50; pointer-events: none; display: flex; flex-direction: column; gap: 6px;
-    }
-    .note {
-      padding: 8px 16px; font-size: 13px; animation: up 2.3s forwards;
-    }
-    @keyframes up {
-      0% { opacity: 0; transform: translateY(8px); }
-      12% { opacity: 1; transform: translateY(0); }
-      75% { opacity: 1; }
-      100% { opacity: 0; transform: translateY(-14px); }
-    }
-
-    #start, #over, #win {
-      position: absolute; inset: 0; z-index: 100;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: radial-gradient(ellipse at center, rgba(15,23,42,0.85) 0%, rgba(2,6,23,0.97) 100%);
-    }
-    #start h1 { font-size: 42px; margin-bottom: 8px; text-shadow: 0 0 30px rgba(56,189,248,0.4); }
-    #start p { color: #94a3b8; margin-bottom: 28px; text-align: center; line-height: 1.6; max-width: 400px; font-size: 14px; }
-    .btn {
-      padding: 12px 40px; font-size: 16px; font-weight: 700; color: #0f172a;
-      background: linear-gradient(135deg, #38bdf8, #22d3ee); border: none;
-      border-radius: 11px; cursor: pointer; box-shadow: 0 4px 18px rgba(56,189,248,0.4);
-      transition: 0.2s;
-    }
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(56,189,248,0.55); }
-    .btn:active { transform: translateY(0); }
-    .stats { color: #cbd5e1; margin: 16px 0; font-size: 14px; line-height: 1.8; text-align: center; }
-
-    #hint {
-      position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%);
-      background: rgba(0,0,0,0.55); padding: 8px 16px; border-radius: 8px;
-      font-size: 13px; color: #94a3b8; z-index: 25; display: none;
-    }
-    #help {
-      position: absolute; bottom: 12px; left: 12px; font-size: 11px; color: #64748b;
-      line-height: 1.5; z-index: 20; background: rgba(0,0,0,0.35); padding: 7px 11px; border-radius: 7px;
-    }
-    #fps { position: absolute; bottom: 10px; right: 12px; font-size: 11px; color: #64748b; font-family: monospace; z-index: 20; }
-    #dmg {
-      position: absolute; inset: 0; pointer-events: none; z-index: 12;
-      background: radial-gradient(ellipse at center, transparent 40%, rgba(220,38,38,0.55) 100%);
-      opacity: 0; transition: opacity 0.25s;
-    }
-    #err {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-      background: #7f1d1d; color: #fecaca; padding: 20px 30px; border-radius: 12px;
-      z-index: 200; display: none; max-width: 90%; text-align: center; line-height: 1.6;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>برج ۳۰ - فاز ۱ | Survival Horror</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, sans-serif; }
+  #blocker {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.85);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: #e0e0e0; z-index: 100; cursor: pointer;
+  }
+  #blocker h1 { font-size: 2.8rem; margin-bottom: 12px; letter-spacing: 4px; color: #ff4444; }
+  #blocker p { font-size: 1.1rem; opacity: 0.7; margin-bottom: 30px; }
+  #instructions { text-align: center; line-height: 1.8; }
+  #fps { position: absolute; top: 12px; left: 12px; color: #0f0; font-size: 14px; z-index: 50; }
+  #phone-hint { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+    color: #aaa; font-size: 13px; opacity: 0.6; z-index: 50; }
+</style>
 </head>
 <body>
-  <canvas id="c"></canvas>
-  <div id="dmg"></div>
-  <div id="crosshair" style="display:none"></div>
-  <div id="hint">کلیک کنید تا کنترل ماوس فعال شود</div>
-
-  <div id="hud">
-    <div class="bars">
-      <div class="bar-row"><span class="bar-icon">❤️</span><div class="bar-bg"><div class="bar-fill" id="hp-fill" style="width:100%"></div></div></div>
-      <div class="bar-row"><span class="bar-icon">🍖</span><div class="bar-bg"><div class="bar-fill" id="hunger-fill" style="width:100%"></div></div></div>
-      <div class="bar-row"><span class="bar-icon">⚡</span><div class="bar-bg"><div class="bar-fill" id="stamina-fill" style="width:100%"></div></div></div>
-    </div>
-    <div id="time-box" class="glass"><span id="t-icon">☀️</span> <span id="t-text">روز ۰۶:۰۰</span></div>
+<div id="blocker">
+  <h1>برج ۳۰</h1>
+  <p>طبقه سی‌ام • ساعت ۲۳:۴۷</p>
+  <div id="instructions">
+    کلیک کن تا وارد شی<br>
+    حرکت: WASD • نگاه: ماوس • چراغ‌قوه: F (فاز ۲)<br>
+    <small style="opacity:0.5">فاز ۱ – موتور گرافیکی + آپارتمان + گوشی</small>
   </div>
+</div>
+<div id="fps">FPS: --</div>
+<div id="phone-hint">گوشی رو با ماوس حرکت بده • پیام‌ها خودکار می‌آن</div>
 
-  <div id="notes"></div>
-  <div id="fps">FPS: --</div>
-  <div id="help">
-    WASD حرکت • Shift دویدن • Space پرش<br>
-    E جمع‌آوری • I کوله • C ساخت • ESC بستن<br>
-    کلیک چپ حمله • هدف: ساخت قایق نجات
-  </div>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
 
-  <div id="inv" class="glass">
-    <div class="panel-title">کوله پشتی — روی 🍎 کلیک کن تا بخوری</div>
-    <div class="grid" id="inv-grid"></div>
-  </div>
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { SSAOPass } from 'three/addons/postprocessing/SSAOPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
+import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
-  <div id="craft" class="glass">
-    <div class="panel-title">🔨 منوی ساخت</div>
-    <div id="recipe-list"></div>
-  </div>
+// ==================== تنظیمات اصلی ====================
+const CONFIG = {
+  shadowMapSize: 2048,        // برای ۶۰fps روی اکثر سیستم‌ها (می‌تونی ۴۰۹۶ کنی اگر قوی داری)
+  enableHeavyPost: true,
+  fogDensity: 0.018
+};
 
-  <div id="start">
-    <h1>جزیره نجات</h1>
-    <p>در جزیره‌ای دورافتاده گیر افتاده‌ای.<br>چوب و سنگ و فیبر جمع کن، قایق بساز و نجات پیدا کن.</p>
-    <button class="btn" id="btn-start">شروع بازی</button>
-  </div>
+let scene, camera, renderer, composer;
+let clock = new THREE.Clock();
+let fpsFrames = 0, fpsLast = performance.now();
+let phoneMesh, phoneScreenCanvas, phoneCtx;
+let pointerLocked = false;
+let mouseX = 0, mouseY = 0;
+let lookX = 0, lookY = 0;
+let velocity = new THREE.Vector3();
+let direction = new THREE.Vector3();
+const keys = {};
 
-  <div id="over" style="display:none">
-    <h1 style="color:#f87171;font-size:36px">شکست خوردی</h1>
-    <div class="stats" id="over-stats"></div>
-    <button class="btn" onclick="location.reload()">تلاش دوباره</button>
-  </div>
+// ذخیره و بارگذاری ساده برای ادامه بازی
+const SAVE_KEY = 'tower30_save_v1';
+function loadSave() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+function saveGame(data) {
+  localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+}
 
-  <div id="win" style="display:none">
-    <h1 style="color:#34d399;font-size:36px">🎉 نجات یافتی!</h1>
-    <div class="stats" id="win-stats"></div>
-    <button class="btn" onclick="location.reload()">بازی جدید</button>
-  </div>
+// ==================== راه‌اندازی موتور ====================
+function init() {
+  scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x1a1a22, CONFIG.fogDensity);
+  scene.background = new THREE.Color(0x0a0a12);
 
-  <div id="err"></div>
+  camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.05, 200);
+  camera.position.set(0, 1.65, 4); // داخل آپارتمان
 
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  renderer = new THREE.WebGLRenderer({
+    antialias: false, // SMAA خودش انجام می‌ده
+    powerPreference: 'high-performance',
+    stencil: false
+  });
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); // محدودیت برای FPS
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  document.body.appendChild(renderer.domElement);
+
+  // نورپردازی سینمایی
+  setupLighting();
+  buildApartment();
+  createPhone();
+  setupPostProcessing();
+  setupControls();
+
+  // بارگذاری ذخیره (اگر وجود داشت)
+  const save = loadSave();
+  if (save) {
+    camera.position.fromArray(save.pos);
+    lookX = save.lookX || 0;
+    lookY = save.lookY || 0;
+    console.log('ادامه از آخرین نقطه ذخیره شده...');
+  }
+
+  animate();
+}
+
+// ==================== نورپردازی ====================
+function setupLighting() {
+  // نور ملایم آسمان + زمین
+  const hemi = new THREE.HemisphereLight(0x445566, 0x221100, 0.35);
+  scene.add(hemi);
+
+  // نور اصلی پنجره (غروب)
+  const windowLight = new THREE.DirectionalLight(0xff9966, 1.8);
+  windowLight.position.set(-8, 6, -12);
+  windowLight.castShadow = true;
+  windowLight.shadow.mapSize.set(CONFIG.shadowMapSize, CONFIG.shadowMapSize);
+  windowLight.shadow.camera.near = 1;
+  windowLight.shadow.camera.far = 40;
+  windowLight.shadow.camera.left = -12;
+  windowLight.shadow.camera.right = 12;
+  windowLight.shadow.camera.top = 10;
+  windowLight.shadow.camera.bottom = -6;
+  windowLight.shadow.bias = -0.0003;
+  scene.add(windowLight);
+
+  // نورهای نقطه‌ای داخل آپارتمان (لامپ‌های کم‌نور)
+  const lamp1 = new THREE.PointLight(0xffaa77, 1.4, 8, 1.8);
+  lamp1.position.set(2.2, 2.4, 1.5);
+  lamp1.castShadow = true;
+  lamp1.shadow.mapSize.set(1024, 1024);
+  scene.add(lamp1);
+
+  const lamp2 = new THREE.PointLight(0x88aacc, 0.6, 6, 2);
+  lamp2.position.set(-2.5, 2.1, -1.8);
+  scene.add(lamp2);
+
+  // نور خیلی ضعیف از بیرون شهر
+  const cityGlow = new THREE.PointLight(0x334466, 0.4, 30);
+  cityGlow.position.set(0, 5, -25);
+  scene.add(cityGlow);
+}
+
+// ==================== ساخت آپارتمان طبقه ۳۰ ====================
+function buildApartment() {
+  // کف
+  const floorMat = new THREE.MeshPhysicalMaterial({
+    color: 0x3a342e,
+    roughness: 0.75,
+    metalness: 0.05,
+    clearcoat: 0.15,
+    clearcoatRoughness: 0.4
+  });
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(14, 12), floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  // دیوارها
+  const wallMat = new THREE.MeshPhysicalMaterial({
+    color: 0x4a453f,
+    roughness: 0.85,
+    metalness: 0.02
+  });
+
+  // دیوار عقب (با پنجره)
+  const backWall = new THREE.Mesh(new THREE.BoxGeometry(14, 3.2, 0.25), wallMat);
+  backWall.position.set(0, 1.6, -6);
+  backWall.receiveShadow = true;
+  backWall.castShadow = true;
+  scene.add(backWall);
+
+  // دیوار جلو
+  const frontWall = new THREE.Mesh(new THREE.BoxGeometry(14, 3.2, 0.25), wallMat);
+  frontWall.position.set(0, 1.6, 6);
+  frontWall.receiveShadow = true;
+  scene.add(frontWall);
+
+  // دیوارهای جانبی
+  const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.25, 3.2, 12), wallMat);
+  sideL.position.set(-7, 1.6, 0);
+  sideL.receiveShadow = true;
+  scene.add(sideL);
+
+  const sideR = new THREE.Mesh(new THREE.BoxGeometry(0.25, 3.2, 12), wallMat);
+  sideR.position.set(7, 1.6, 0);
+  sideR.receiveShadow = true;
+  scene.add(sideR);
+
+  // سقف
+  const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(14, 12), new THREE.MeshStandardMaterial({ color: 0x2a2825, roughness: 0.9 }));
+  ceiling.rotation.x = Math.PI / 2;
+  ceiling.position.y = 3.2;
+  ceiling.receiveShadow = true;
+  scene.add(ceiling);
+
+  // پنجره بزرگ
+  const windowFrame = new THREE.Mesh(
+    new THREE.BoxGeometry(5.5, 2.2, 0.15),
+    new THREE.MeshPhysicalMaterial({ color: 0x222222, metalness: 0.7, roughness: 0.3 })
+  );
+  windowFrame.position.set(0, 1.7, -5.9);
+  scene.add(windowFrame);
+
+  // شیشه پنجره (با کمی transmission)
+  const glass = new THREE.Mesh(
+    new THREE.PlaneGeometry(5.1, 1.9),
+    new THREE.MeshPhysicalMaterial({
+      color: 0x88aacc,
+      transmission: 0.75,
+      opacity: 0.35,
+      transparent: true,
+      roughness: 0.05,
+      metalness: 0.1,
+      ior: 1.5
+    })
+  );
+  glass.position.set(0, 1.7, -5.85);
+  scene.add(glass);
+
+  // شهر بیرون (سیلوئت ساده)
+  createCitySilhouette();
+
+  // مبلمان ساده اما با متریال خوب
+  // تخت
+  const bedFrame = new THREE.Mesh(
+    new THREE.BoxGeometry(2.2, 0.4, 1.4),
+    new THREE.MeshPhysicalMaterial({ color: 0x2a2218, roughness: 0.6, metalness: 0.1 })
+  );
+  bedFrame.position.set(-4, 0.25, -2.5);
+  bedFrame.castShadow = true;
+  bedFrame.receiveShadow = true;
+  scene.add(bedFrame);
+
+  const mattress = new THREE.Mesh(
+    new THREE.BoxGeometry(2.1, 0.25, 1.3),
+    new THREE.MeshPhysicalMaterial({ color: 0x5a4a3a, roughness: 0.9, clearcoat: 0.1 })
+  );
+  mattress.position.set(-4, 0.55, -2.5);
+  mattress.castShadow = true;
+  scene.add(mattress);
+
+  // میز کنار تخت
+  const nightstand = new THREE.Mesh(
+    new THREE.BoxGeometry(0.5, 0.55, 0.45),
+    new THREE.MeshPhysicalMaterial({ color: 0x3a3228, roughness: 0.55, metalness: 0.15 })
+  );
+  nightstand.position.set(-5.4, 0.3, -2.5);
+  nightstand.castShadow = true;
+  scene.add(nightstand);
+
+  // لامپ روی میز
+  const lampBase = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.12, 0.15, 12),
+    new THREE.MeshPhysicalMaterial({ color: 0x222222, metalness: 0.8, roughness: 0.2 })
+  );
+  lampBase.position.set(-5.4, 0.65, -2.5);
+  scene.add(lampBase);
+
+  // کابینت
+  const cabinet = new THREE.Mesh(
+    new THREE.BoxGeometry(1.8, 1.1, 0.5),
+    new THREE.MeshPhysicalMaterial({ color: 0x3d352c, roughness: 0.7 })
+  );
+  cabinet.position.set(4.5, 0.55, -4.5);
+  cabinet.castShadow = true;
+  scene.add(cabinet);
+
+  // درب خروجی به راهرو (فعلاً بسته)
+  const door = new THREE.Mesh(
+    new THREE.BoxGeometry(1.1, 2.3, 0.12),
+    new THREE.MeshPhysicalMaterial({ color: 0x4a3a2a, roughness: 0.65, metalness: 0.05 })
+  );
+  door.position.set(5.5, 1.15, 5.9);
+  door.castShadow = true;
+  scene.add(door);
+
+  // ذرات گرد و غبار خیلی سبک
+  createDustParticles();
+}
+
+function createCitySilhouette() {
+  const cityGroup = new THREE.Group();
+  const buildingMat = new THREE.MeshBasicMaterial({ color: 0x111118 });
+  for (let i = 0; i < 25; i++) {
+    const h = 4 + Math.random() * 18;
+    const w = 1.2 + Math.random() * 2.5;
+    const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), buildingMat);
+    b.position.set(
+      (Math.random() - 0.5) * 40,
+      h / 2 - 2,
+      -18 - Math.random() * 25
+    );
+    cityGroup.add(b);
+  }
+  // نورهای شهر
+  for (let i = 0; i < 40; i++) {
+    const light = new THREE.PointLight(0xffaa66, 0.15 + Math.random() * 0.25, 8);
+    light.position.set(
+      (Math.random() - 0.5) * 35,
+      2 + Math.random() * 12,
+      -15 - Math.random() * 20
+    );
+    cityGroup.add(light);
+  }
+  scene.add(cityGroup);
+}
+
+function createDustParticles() {
+  const count = 180;
+  const positions = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 12;
+    positions[i * 3 + 1] = Math.random() * 3;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const mat = new THREE.PointsMaterial({
+    color: 0xccbb99,
+    size: 0.025,
+    transparent: true,
+    opacity: 0.35,
+    depthWrite: false
+  });
+  const dust = new THREE.Points(geo, mat);
+  scene.add(dust);
+  // انیمیشن ساده در حلقه
+  dust.userData.isDust = true;
+}
+
+// ==================== گوشی هوشمند (Diegetic UI) ====================
+function createPhone() {
+  // قاب گوشی
+  phoneMesh = new THREE.Group();
+
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(0.09, 0.18, 0.012),
+    new THREE.MeshPhysicalMaterial({
+      color: 0x1a1a1a,
+      metalness: 0.6,
+      roughness: 0.25,
+      clearcoat: 0.8
+    })
+  );
+  phoneMesh.add(body);
+
+  // صفحه
+  phoneScreenCanvas = document.createElement('canvas');
+  phoneScreenCanvas.width = 360;
+  phoneScreenCanvas.height = 720;
+  phoneCtx = phoneScreenCanvas.getContext('2d');
+  drawPhoneScreen('در حال اتصال...');
+
+  const screenTex = new THREE.CanvasTexture(phoneScreenCanvas);
+  screenTex.colorSpace = THREE.SRGBColorSpace;
+  const screen = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.082, 0.164),
+    new THREE.MeshBasicMaterial({ map: screenTex })
+  );
+  screen.position.z = 0.007;
+  phoneMesh.add(screen);
+
+  phoneMesh.position.set(-0.28, -0.22, -0.45);
+  phoneMesh.rotation.set(0.15, 0.35, 0.08);
+  camera.add(phoneMesh);
+  scene.add(camera);
+
+  // پیام‌های اولیه
+  setTimeout(() => drawPhoneScreen('پیام ناشناس:\n\nتو هنوز اونجایی؟\nبرق تا ۴ ساعت دیگه می‌ره.\nسگ رو نزدیک نگه دار.'), 2500);
+  setTimeout(() => drawPhoneScreen('پیام ناشناس:\n\nطبقه ۳۰ امن نیست.\nبرو پایین.\nهر صدایی خطرناکه.'), 8000);
+  setTimeout(() => drawPhoneScreen('پیام ناشناس:\n\nمن کمکت می‌کنم.\nولی فقط اگر ساکت باشی.\n\n— ؟'), 14000);
+}
+
+function drawPhoneScreen(text) {
+  const ctx = phoneCtx;
+  const w = phoneScreenCanvas.width;
+  const h = phoneScreenCanvas.height;
+
+  // پس‌زمینه تیره
+  ctx.fillStyle = '#0d0d12';
+  ctx.fillRect(0, 0, w, h);
+
+  // نوار وضعیت
+  ctx.fillStyle = '#1a1a22';
+  ctx.fillRect(0, 0, w, 48);
+  ctx.fillStyle = '#888';
+  ctx.font = '18px system-ui';
+  ctx.fillText('۲۳:۴۷', 20, 32);
+  ctx.fillText('۴۲٪', w - 70, 32);
+
+  // متن پیام
+  ctx.fillStyle = '#e8e8e8';
+  ctx.font = '22px system-ui';
+  const lines = text.split('\n');
+  let y = 110;
+  lines.forEach(line => {
+    ctx.fillText(line, 30, y);
+    y += 36;
+  });
+
+  // نشانگر پایین
+  ctx.fillStyle = '#333';
+  ctx.fillRect(w / 2 - 40, h - 28, 80, 6);
+
+  if (phoneMesh) {
+    phoneMesh.children[1].material.map.needsUpdate = true;
+  }
+}
+
+// ==================== پس‌پردازش سنگین ====================
+function setupPostProcessing() {
+  composer = new EffectComposer(renderer);
+  const renderPass = new RenderPass(scene, camera);
+  composer.addPass(renderPass);
+
+  if (CONFIG.enableHeavyPost) {
+    // SSAO
+    const ssaoPass = new SSAOPass(scene, camera, innerWidth, innerHeight);
+    ssaoPass.kernelRadius = 12;
+    ssaoPass.minDistance = 0.001;
+    ssaoPass.maxDistance = 0.08;
+    composer.addPass(ssaoPass);
+
+    // Bloom
+    const bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(innerWidth, innerHeight),
+      0.45,  // strength
+      0.6,   // radius
+      0.85   // threshold
+    );
+    composer.addPass(bloomPass);
+
+    // عمق میدان سینمایی
+    const bokehPass = new BokehPass(scene, camera, {
+      focus: 4.5,
+      aperture: 0.00022,
+      maxblur: 0.008
+    });
+    composer.addPass(bokehPass);
+
+    // SMAA
+    const smaaPass = new SMAAPass();
+    composer.addPass(smaaPass);
+  }
+
+  // شیدر سفارشی: Chromatic + Grain + Vignette
+  const customShader = {
+    uniforms: {
+      tDiffuse: { value: null },
+      time: { value: 0 },
+      chromatic: { value: 0.0028 },
+      grain: { value: 0.045 },
+      vignette: { value: 0.55 }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D tDiffuse;
+      uniform float time;
+      uniform float chromatic;
+      uniform float grain;
+      uniform float vignette;
+      varying vec2 vUv;
+
+      float random(vec2 p) {
+        return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+      }
+
+      void main() {
+        vec2 uv = vUv;
+        float r = texture2D(tDiffuse, uv + vec2(chromatic, 0.0)).r;
+        float g = texture2D(tDiffuse, uv).g;
+        float b = texture2D(tDiffuse, uv - vec2(chromatic, 0.0)).b;
+        vec3 col = vec3(r, g, b);
+
+        // Film grain
+        float noise = random(uv * time) * grain;
+        col += noise - grain * 0.5;
+
+        // Vignette
+        float dist = distance(uv, vec2(0.5));
+        col *= smoothstep(0.85, 0.25, dist * vignette + 0.3);
+
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `
+  };
+  const customPass = new ShaderPass(customShader);
+  composer.addPass(customPass);
+
+  // Output
+  composer.addPass(new OutputPass());
+
+  // نگه داشتن رفرنس برای آپدیت time
+  window._customPass = customPass;
+}
+
+// ==================== کنترل‌ها ====================
+function setupControls() {
+  const blocker = document.getElementById('blocker');
+  blocker.addEventListener('click', () => {
+    document.body.requestPointerLock();
+  });
+
+  document.addEventListener('pointerlockchange', () => {
+    pointerLocked = document.pointerLockElement === document.body;
+    blocker.style.display = pointerLocked ? 'none' : 'flex';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!pointerLocked) return;
+    lookX -= e.movementX * 0.0022;
+    lookY -= e.movementY * 0.0022;
+    lookY = Math.max(-1.4, Math.min(1.4, lookY));
+  });
+
+  document.addEventListener('keydown', (e) => { keys[e.code] = true; });
+  document.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+  window.addEventListener('resize', onResize);
+}
+
+function onResize() {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  composer.setSize(innerWidth, innerHeight);
+}
+
+// ==================== حلقه اصلی ====================
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t = clock.elapsedTime;
+
+  // حرکت ساده بازیکن (فاز ۱)
+  if (pointerLocked) {
+    direction.set(0, 0, 0);
+    if (keys['KeyW']) direction.z -= 1;
+    if (keys['KeyS']) direction.z += 1;
+    if (keys['KeyA']) direction.x -= 1;
+    if (keys['KeyD']) direction.x += 1;
+    direction.normalize();
+
+    const speed = keys['ShiftLeft'] ? 4.2 : 2.4;
+    velocity.x = direction.x * speed;
+    velocity.z = direction.z * speed;
+
+    // چرخش دوربین با اینرسی ملایم
+    camera.rotation.order = 'YXZ';
+    camera.rotation.y = lookX;
+    camera.rotation.x = lookY;
+
+    // حرکت در جهت نگاه
+    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    forward.y = 0;
+    forward.normalize();
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+    right.y = 0;
+    right.normalize();
+
+    camera.position.addScaledVector(forward, -velocity.z * dt);
+    camera.position.addScaledVector(right, velocity.x * dt);
+
+    // محدودیت داخل آپارتمان
+    camera.position.x = Math.max(-6.2, Math.min(6.2, camera.position.x));
+    camera.position.z = Math.max(-5.3, Math.min(5.3, camera.position.z));
+    camera.position.y = 1.65;
+
+    // لرزش خیلی ملایم دوربین (Camera Bob سبک)
+    if (direction.length() > 0.1) {
+      camera.position.y += Math.sin(t * 9) * 0.012;
     }
   }
-  </script>
 
-  <script type="module">
-    function showError(msg) {
-      const el = document.getElementById('err');
-      el.style.display = 'block';
-      el.innerHTML = msg;
-      console.error(msg);
-    }
-    window.addEventListener('error', e => showError('خطا: ' + (e.message || e)));
-    window.addEventListener('unhandledrejection', e => showError('خطای Promise: ' + (e.reason?.message || e.reason)));
+  // آپدیت شیدر سفارشی
+  if (window._customPass) {
+    window._customPass.uniforms.time.value = t;
+  }
 
-    let THREE, PointerLockControls, Sky, Water, EffectComposer, RenderPass, UnrealBloomPass, ShaderPass, FXAAShader, OutputPass;
-
-    try {
-      THREE = await import('three');
-      PointerLockControls = (await import('three/addons/controls/PointerLockControls.js')).PointerLockControls;
-      Sky = (await import('three/addons/objects/Sky.js')).Sky;
-      Water = (await import('three/addons/objects/Water.js')).Water;
-      EffectComposer = (await import('three/addons/postprocessing/EffectComposer.js')).EffectComposer;
-      RenderPass = (await import('three/addons/postprocessing/RenderPass.js')).RenderPass;
-      UnrealBloomPass = (await import('three/addons/postprocessing/UnrealBloomPass.js')).UnrealBloomPass;
-      ShaderPass = (await import('three/addons/postprocessing/ShaderPass.js')).ShaderPass;
-      FXAAShader = (await import('three/addons/shaders/FXAAShader.js')).FXAAShader;
-      OutputPass = (await import('three/addons/postprocessing/OutputPass.js')).OutputPass;
-    } catch (e) {
-      showError('خطا در بارگذاری Three.js<br>اینترنت را چک کن یا از سرور محلی استفاده کن.<br><br>' + e.message);
-      throw e;
-    }
-
-    const R = 200;
-    const state = {
-      hp: 100, hunger: 100, stamina: 100,
-      day: 0.28, playTime: 0,
-      started: false, over: false, win: false,
-      invOpen: false, craftOpen: false,
-      resources: 0, kills: 0
-    };
-
-    const inv = {
-      nails: 100, hammer: 1, saw: 1,
-      wood: 0, stone: 0, fiber: 0, food: 5,
-      spear: 0, axe: 0, boat: 0
-    };
-
-    const recipes = [
-      { name: 'نیزه چوبی', need: { wood: 3, nails: 2 }, give: { spear: 1 } },
-      { name: 'تبر', need: { wood: 2, nails: 3 }, give: { axe: 1 } },
-      { name: 'آتش', need: { wood: 5, stone: 2 }, give: { fire: 1 } },
-      { name: 'کلبه', need: { wood: 20, nails: 30 }, give: { hut: 1 } },
-      { name: 'قایق نجات 🏆', need: { wood: 50, nails: 40, fiber: 30 }, give: { boat: 1 }, win: true }
-    ];
-
-    function getH(x, z) {
-      const d = Math.sqrt(x * x + z * z);
-      let h = Math.sin(x * 0.018) * Math.cos(z * 0.015) * 11
-            + Math.sin(x * 0.045 + 1.2) * Math.cos(z * 0.038) * 4.5
-            + Math.sin(x * 0.09) * 2;
-      const f = Math.max(0, 1 - Math.pow(d / R, 2.35));
-      h *= f;
-      if (d > R * 0.78) h = Math.min(h, 1.5);
-      return Math.max(h, -1);
-    }
-
-    const canvas = document.getElementById('c');
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x87b8d8, 0.0016);
-
-    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 2000);
-    camera.position.set(0, 10, 25);
-
-    const sunL = new THREE.DirectionalLight(0xfff3e0, 2.5);
-    sunL.castShadow = true;
-    sunL.shadow.mapSize.set(2048, 2048);
-    sunL.shadow.camera.near = 5;
-    sunL.shadow.camera.far = 350;
-    sunL.shadow.camera.left = sunL.shadow.camera.bottom = -160;
-    sunL.shadow.camera.right = sunL.shadow.camera.top = 160;
-    sunL.shadow.bias = -0.0004;
-    sunL.shadow.normalBias = 0.02;
-    scene.add(sunL);
-
-    const hemi = new THREE.HemisphereLight(0x87CEEB, 0x3d2b1f, 0.48);
-    scene.add(hemi);
-    scene.add(new THREE.AmbientLight(0x404050, 0.2));
-
-    const moonL = new THREE.DirectionalLight(0xaabbff, 0);
-    scene.add(moonL);
-
-    const sky = new Sky();
-    sky.scale.setScalar(4000);
-    scene.add(sky);
-    const skyU = sky.material.uniforms;
-    skyU.turbidity.value = 3.2;
-    skyU.rayleigh.value = 1.5;
-    skyU.mieCoefficient.value = 0.004;
-    skyU.mieDirectionalG.value = 0.85;
-    const sunPos = new THREE.Vector3();
-
-    const water = new Water(new THREE.PlaneGeometry(3000, 3000), {
-      textureWidth: 512, textureHeight: 512,
-      waterNormals: new THREE.TextureLoader().load(
-        'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/textures/waternormals.jpg',
-        t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; }
-      ),
-      sunDirection: new THREE.Vector3(),
-      sunColor: 0xffffff,
-      waterColor: 0x001e0f,
-      distortionScale: 3.5,
-      fog: true
-    });
-    water.rotation.x = -Math.PI / 2;
-    scene.add(water);
-
-    {
-      const seg = 90;
-      const geo = new THREE.PlaneGeometry(R * 2.1, R * 2.1, seg, seg);
-      geo.rotateX(-Math.PI / 2);
-      const pos = geo.attributes.position;
-      const cols = [];
-      const c = new THREE.Color();
+  // ذرات گرد و غبار
+  scene.traverse(obj => {
+    if (obj.userData.isDust) {
+      const pos = obj.geometry.attributes.position;
       for (let i = 0; i < pos.count; i++) {
-        const x = pos.getX(i), z = pos.getZ(i);
-        const h = getH(x, z);
-        pos.setY(i, h);
-        if (h < 1.3) c.setHex(0xd4a574);
-        else if (h < 5) c.setHex(0x4a7c3f);
-        else if (h < 12) c.setHex(0x3d6b35);
-        else c.setHex(0x6b5b4f);
-        cols.push(c.r, c.g, c.b);
+        pos.array[i * 3 + 1] += Math.sin(t + i) * 0.0008;
+        if (pos.array[i * 3 + 1] > 3.1) pos.array[i * 3 + 1] = 0.1;
       }
-      geo.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
-      geo.computeVertexNormals();
-      const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
-        vertexColors: true, roughness: 0.9, metalness: 0.02
-      }));
-      mesh.receiveShadow = true;
-      mesh.castShadow = true;
-      scene.add(mesh);
+      pos.needsUpdate = true;
     }
+  });
 
-    const interact = [];
-
-    function addTree(x, z) {
-      const y = getH(x, z);
-      if (y < 2.0 || y > 13) return false;
-      const trunk = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.3, 0.45, 3.0, 6),
-        new THREE.MeshStandardMaterial({ color: 0x4a3728, roughness: 0.9 })
-      );
-      trunk.position.set(x, y + 1.5, z);
-      trunk.castShadow = true;
-      trunk.receiveShadow = true;
-      const crown = new THREE.Mesh(
-        new THREE.ConeGeometry(1.9, 8, 7),
-        new THREE.MeshStandardMaterial({ color: 0x2d5a27, roughness: 0.85 })
-      );
-      crown.position.set(x, y + 5.8, z);
-      crown.castShadow = true;
-      const data = { type: 'tree', wood: 4 + (Math.random() * 3 | 0), hp: 3 };
-      trunk.userData = data;
-      crown.userData = data;
-      scene.add(trunk); scene.add(crown);
-      interact.push(trunk);
-      return true;
-    }
-
-    let trees = 0;
-    for (let i = 0; i < 400 && trees < 150; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const r = 25 + Math.random() * (R * 0.65);
-      if (addTree(Math.cos(a) * r, Math.sin(a) * r)) trees++;
-    }
-
-    for (let i = 0; i < 50; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const r = 15 + Math.random() * (R * 0.75);
-      const x = Math.cos(a) * r, z = Math.sin(a) * r;
-      const y = getH(x, z);
-      if (y < 0.6) continue;
-      const rock = new THREE.Mesh(
-        new THREE.DodecahedronGeometry(0.9, 0),
-        new THREE.MeshStandardMaterial({ color: 0x6b6560, roughness: 0.93 })
-      );
-      rock.position.set(x, y + 0.5, z);
-      rock.scale.setScalar(0.5 + Math.random() * 1.2);
-      rock.rotation.set(Math.random(), Math.random(), Math.random());
-      rock.castShadow = true;
-      rock.userData = { type: 'rock', stone: 2 + (Math.random() * 2 | 0), hp: 2 };
-      scene.add(rock);
-      interact.push(rock);
-    }
-
-    for (let i = 0; i < 40; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const r = 20 + Math.random() * (R * 0.6);
-      const x = Math.cos(a) * r, z = Math.sin(a) * r;
-      const y = getH(x, z);
-      if (y < 1.6) continue;
-      const bush = new THREE.Mesh(
-        new THREE.SphereGeometry(1.1, 6, 5),
-        new THREE.MeshStandardMaterial({ color: 0x3d6b2f, roughness: 0.88 })
-      );
-      bush.position.set(x, y + 0.9, z);
-      bush.scale.set(1.1, 0.65, 1.1);
-      bush.castShadow = true;
-      bush.userData = { type: 'bush', fiber: 2, food: 1, hp: 1 };
-      scene.add(bush);
-      interact.push(bush);
-    }
-
-    {
-      const gGeo = new THREE.PlaneGeometry(0.5, 0.9);
-      const gMat = new THREE.MeshStandardMaterial({ color: 0x5a8f3c, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
-      const count = 1600;
-      const grass = new THREE.InstancedMesh(gGeo, gMat, count);
-      const dummy = new THREE.Object3D();
-      let g = 0;
-      for (let i = 0; i < count * 2 && g < count; i++) {
-        const a = Math.random() * Math.PI * 2;
-        const r = 10 + Math.random() * (R * 0.7);
-        const x = Math.cos(a) * r, z = Math.sin(a) * r;
-        const y = getH(x, z);
-        if (y < 1.5 || y > 10) continue;
-        dummy.position.set(x, y + 0.45, z);
-        dummy.rotation.y = Math.random() * Math.PI;
-        dummy.scale.setScalar(0.6 + Math.random() * 0.5);
-        dummy.updateMatrix();
-        grass.setMatrixAt(g++, dummy.matrix);
-      }
-      grass.instanceMatrix.needsUpdate = true;
-      scene.add(grass);
-    }
-
-    const pCount = 250;
-    const pGeo = new THREE.BufferGeometry();
-    const pArr = new Float32Array(pCount * 3);
-    for (let i = 0; i < pCount; i++) {
-      pArr[i*3] = (Math.random()-0.5)*360;
-      pArr[i*3+1] = 2 + Math.random()*26;
-      pArr[i*3+2] = (Math.random()-0.5)*360;
-    }
-    pGeo.setAttribute('position', new THREE.BufferAttribute(pArr, 3));
-    const pollen = new THREE.Points(pGeo, new THREE.PointsMaterial({
-      color: 0xd4e8a0, size: 0.3, transparent: true, opacity: 0.5, depthWrite: false
-    }));
-    scene.add(pollen);
-
-    const controls = new PointerLockControls(camera, document.body);
-    scene.add(controls.object);
-
-    const player = {
-      h: 1.6, vel: new THREE.Vector3(), onGround: false,
-      speed: 7.2, run: 1.7, jump: 9, canJump: true
-    };
-
-    const body = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.35, 0.9, 4, 8),
-      new THREE.MeshStandardMaterial({ color: 0x3b82f6 })
-    );
-    body.castShadow = true;
-    body.visible = false;
-    scene.add(body);
-
-    const animals = [];
-    const aTypes = {
-      wolf:  { col: 0x6b7280, sc: 0.8,  spd: 6.5, hp: 26, dmg: 10 },
-      bear:  { col: 0x5c4033, sc: 1.5,  spd: 3.8, hp: 80, dmg: 24 },
-      tiger: { col: 0xd97706, sc: 1.05, spd: 7.8, hp: 48, dmg: 18 }
-    };
-
-    function spawnAnimal(type, x, z) {
-      const t = aTypes[type];
-      const m = new THREE.Mesh(
-        new THREE.CapsuleGeometry(0.4 * t.sc, 0.8 * t.sc, 4, 8),
-        new THREE.MeshStandardMaterial({ color: t.col, roughness: 0.8 })
-      );
-      m.castShadow = true;
-      m.position.set(x, getH(x, z) + 0.8 * t.sc, z);
-      scene.add(m);
-      animals.push({
-        mesh: m, type, hp: t.hp, max: t.hp, spd: t.spd, dmg: t.dmg,
-        st: 'idle', timer: 1 + Math.random() * 2,
-        wander: new THREE.Vector3(x, 0, z)
-      });
-    }
-
-    for (let i = 0; i < 5; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const r = 50 + Math.random() * 60;
-      spawnAnimal('wolf', Math.cos(a)*r, Math.sin(a)*r);
-    }
-    spawnAnimal('bear', -60, 30);
-    spawnAnimal('bear', 45, -75);
-    spawnAnimal('tiger', 80, 40);
-    spawnAnimal('tiger', -30, -60);
-
-    const composer = new EffectComposer(renderer);
-    composer.addPass(new RenderPass(scene, camera));
-    const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.32, 0.5, 0.8);
-    composer.addPass(bloom);
-    const fxaa = new ShaderPass(FXAAShader);
-    fxaa.material.uniforms.resolution.value.set(1/window.innerWidth, 1/window.innerHeight);
-    composer.addPass(fxaa);
-    composer.addPass(new OutputPass());
-
-    const keys = {};
-    const ray = new THREE.Raycaster();
-    const mouse = new THREE.Vector2(0, 0);
-
-    function note(msg) {
-      const el = document.createElement('div');
-      el.className = 'note glass';
-      el.textContent = msg;
-      document.getElementById('notes').appendChild(el);
-      setTimeout(() => el.remove(), 2300);
-    }
-
-    function closeUI() {
-      state.invOpen = false;
-      state.craftOpen = false;
-      document.getElementById('inv').classList.remove('open');
-      document.getElementById('craft').classList.remove('open');
-    }
-
-    function openInv() {
-      if (!state.started || state.over || state.win) return;
-      state.invOpen = !state.invOpen;
-      if (state.invOpen) {
-        state.craftOpen = false;
-        document.getElementById('craft').classList.remove('open');
-        document.getElementById('inv').classList.add('open');
-        renderInv();
-        if (controls.isLocked) controls.unlock();
-      } else {
-        document.getElementById('inv').classList.remove('open');
-      }
-    }
-
-    function openCraft() {
-      if (!state.started || state.over || state.win) return;
-      state.craftOpen = !state.craftOpen;
-      if (state.craftOpen) {
-        state.invOpen = false;
-        document.getElementById('inv').classList.remove('open');
-        document.getElementById('craft').classList.add('open');
-        renderCraft();
-        if (controls.isLocked) controls.unlock();
-      } else {
-        document.getElementById('craft').classList.remove('open');
-      }
-    }
-
-    window.addEventListener('keydown', e => {
-      keys[e.code] = true;
-      if (e.repeat) return;
-      if (e.code === 'KeyI') { e.preventDefault(); openInv(); }
-      if (e.code === 'KeyC') { e.preventDefault(); openCraft(); }
-      if (e.code === 'Escape') closeUI();
-      if (e.code === 'KeyE') tryGather();
-      if (e.code === 'KeyV') body.visible = !body.visible;
+  // ذخیره خودکار هر ۳۰ ثانیه
+  if (Math.floor(t) % 30 === 0 && Math.floor(t) !== window._lastSave) {
+    window._lastSave = Math.floor(t);
+    saveGame({
+      pos: camera.position.toArray(),
+      lookX, lookY,
+      time: Date.now()
     });
-    window.addEventListener('keyup', e => { keys[e.code] = false; });
+  }
 
-    document.body.addEventListener('click', e => {
-      if (!state.started || state.over || state.win) return;
-      if (state.invOpen || state.craftOpen) return;
-      if (e.target.closest('#inv') || e.target.closest('#craft') || e.target.closest('.btn')) return;
-      if (!controls.isLocked) controls.lock();
-    });
+  // FPS
+  fpsFrames++;
+  if (performance.now() - fpsLast > 1000) {
+    document.getElementById('fps').textContent = `FPS: ${fpsFrames}`;
+    fpsFrames = 0;
+    fpsLast = performance.now();
+  }
 
-    controls.addEventListener('lock', () => {
-      document.getElementById('hint').style.display = 'none';
-      document.getElementById('crosshair').style.display = 'block';
-    });
-    controls.addEventListener('unlock', () => {
-      document.getElementById('crosshair').style.display = 'none';
-      if (state.started && !state.invOpen && !state.craftOpen && !state.over && !state.win) {
-        document.getElementById('hint').style.display = 'block';
-      }
-    });
+  composer.render();
+}
 
-    window.addEventListener('mousedown', e => {
-      if (e.button !== 0 || !controls.isLocked || state.invOpen || state.craftOpen) return;
-      doAttack();
-    });
-
-    function updatePlayer(dt) {
-      if (!controls.isLocked || state.invOpen || state.craftOpen || state.over || state.win) return;
-
-      const front = new THREE.Vector3();
-      const side = new THREE.Vector3();
-      camera.getWorldDirection(front);
-      front.y = 0; front.normalize();
-      side.crossVectors(front, new THREE.Vector3(0,1,0)).normalize();
-
-      const dir = new THREE.Vector3();
-      if (keys.KeyW || keys.ArrowUp) dir.add(front);
-      if (keys.KeyS || keys.ArrowDown) dir.sub(front);
-      if (keys.KeyA || keys.ArrowLeft) dir.sub(side);
-      if (keys.KeyD || keys.ArrowRight) dir.add(side);
-
-      const moving = dir.lengthSq() > 0.001;
-      let spd = player.speed;
-      if ((keys.ShiftLeft || keys.ShiftRight) && state.stamina > 0 && moving) {
-        spd *= player.run;
-        state.stamina = Math.max(0, state.stamina - 15 * dt);
-      } else if (!(keys.ShiftLeft || keys.ShiftRight)) {
-        state.stamina = Math.min(100, state.stamina + 10 * dt);
-      }
-
-      if (moving) {
-        dir.normalize();
-        player.vel.x = dir.x * spd;
-        player.vel.z = dir.z * spd;
-      } else {
-        player.vel.x *= 0.8;
-        player.vel.z *= 0.8;
-      }
-
-      if (keys.Space && player.onGround && player.canJump) {
-        player.vel.y = player.jump;
-        player.onGround = false;
-        player.canJump = false;
-      }
-      if (!keys.Space) player.canJump = true;
-
-      player.vel.y -= 22 * dt;
-
-      const p = controls.object.position;
-      p.x += player.vel.x * dt;
-      p.z += player.vel.z * dt;
-      p.y += player.vel.y * dt;
-
-      const gy = getH(p.x, p.z) + player.h;
-      if (p.y <= gy) {
-        p.y = gy;
-        player.vel.y = 0;
-        player.onGround = true;
-      } else player.onGround = false;
-
-      const d = Math.sqrt(p.x*p.x + p.z*p.z);
-      if (d > R + 10 && inv.boat < 1) {
-        const push = (d - R - 6) * 0.5;
-        p.x -= (p.x/d) * push * dt * 8;
-        p.z -= (p.z/d) * push * dt * 8;
-      }
-
-      if (moving && player.onGround) {
-        camera.position.y = p.y + Math.sin(state.playTime * 9) * 0.03;
-      }
-
-      body.position.set(p.x, p.y - 0.75, p.z);
-      body.rotation.y = Math.atan2(front.x, front.z);
-
-      state.hunger = Math.max(0, state.hunger - 0.65 * dt);
-      if (state.hunger <= 0) state.hp = Math.max(0, state.hp - 3 * dt);
-    }
-
-    function tryGather() {
-      if (!controls.isLocked) return;
-      ray.setFromCamera(mouse, camera);
-      const hits = ray.intersectObjects(interact, false);
-      for (const h of hits) {
-        if (h.distance > 5) continue;
-        const o = h.object;
-        const u = o.userData;
-        if (!u || !u.type || u.hp <= 0) continue;
-
-        if (u.type === 'tree') {
-          if (inv.saw < 1 && inv.axe < 1) { note('نیاز به اره یا تبر داری'); return; }
-          u.hp--;
-          if (u.hp <= 0) {
-            inv.wood += u.wood;
-            state.resources += u.wood;
-            note('+' + u.wood + ' چوب');
-            scene.remove(o);
-            const i = interact.indexOf(o);
-            if (i >= 0) interact.splice(i, 1);
-            scene.traverse(c => { if (c.userData === u && c !== o) scene.remove(c); });
-          } else note('درخت: ' + u.hp + ' ضربه مانده');
-          return;
-        }
-        if (u.type === 'rock') {
-          u.hp--;
-          if (u.hp <= 0) {
-            inv.stone += u.stone;
-            state.resources += u.stone;
-            note('+' + u.stone + ' سنگ');
-            scene.remove(o);
-            const i = interact.indexOf(o);
-            if (i >= 0) interact.splice(i, 1);
-          } else note('سنگ: ' + u.hp + ' ضربه مانده');
-          return;
-        }
-        if (u.type === 'bush') {
-          inv.fiber += u.fiber;
-          inv.food += u.food;
-          state.resources += u.fiber + u.food;
-          note('+' + u.fiber + ' فیبر  +' + u.food + ' غذا');
-          scene.remove(o);
-          const i = interact.indexOf(o);
-          if (i >= 0) interact.splice(i, 1);
-          return;
-        }
-      }
-    }
-
-    function doAttack() {
-      ray.setFromCamera(mouse, camera);
-      const hits = ray.intersectObjects(animals.map(a => a.mesh));
-      if (!hits.length || hits[0].distance > 4) return;
-      const a = animals.find(x => x.mesh === hits[0].object);
-      if (!a || a.hp <= 0) return;
-      const dmg = inv.spear > 0 ? 18 : (inv.axe > 0 ? 14 : 6);
-      a.hp -= dmg;
-      a.st = 'chase';
-      for (let i = 0; i < 6; i++) {
-        const p = new THREE.Mesh(
-          new THREE.SphereGeometry(0.1, 4, 4),
-          new THREE.MeshBasicMaterial({ color: 0xaa2222 })
-        );
-        p.position.copy(hits[0].point);
-        scene.add(p);
-        const v = new THREE.Vector3((Math.random()-0.5)*3, Math.random()*2, (Math.random()-0.5)*3);
-        const t0 = performance.now();
-        (function anim() {
-          const t = (performance.now() - t0) / 450;
-          if (t > 1) { scene.remove(p); return; }
-          p.position.addScaledVector(v, 0.016);
-          v.y -= 0.1;
-          p.scale.setScalar(1 - t);
-          requestAnimationFrame(anim);
-        })();
-      }
-      if (a.hp <= 0) {
-        a.st = 'dead';
-        state.kills++;
-        note('حیوان کشته شد');
-        setTimeout(() => {
-          scene.remove(a.mesh);
-          const i = animals.indexOf(a);
-          if (i >= 0) animals.splice(i, 1);
-        }, 500);
-      }
-    }
-
-    function updateAnimals(dt) {
-      const pp = controls.object.position;
-      const night = state.day < 0.2 || state.day > 0.8;
-      for (const a of animals) {
-        if (a.st === 'dead') continue;
-        a.timer -= dt;
-        const dist = a.mesh.position.distanceTo(pp);
-        const detect = night ? 34 : 24;
-
-        if (dist < detect && a.st !== 'atk' && a.st !== 'flee') a.st = 'chase';
-        if (a.hp < a.max * 0.2 && a.st !== 'flee') { a.st = 'flee'; a.timer = 3; }
-
-        if (a.st === 'idle' && a.timer <= 0) {
-          a.st = 'wander';
-          a.wander.set(a.mesh.position.x + (Math.random()-0.5)*25, 0, a.mesh.position.z + (Math.random()-0.5)*25);
-          a.timer = 2 + Math.random()*3;
-        } else if (a.st === 'wander') {
-          const d = a.wander.clone().sub(a.mesh.position); d.y = 0;
-          if (d.length() < 2 || a.timer <= 0) { a.st = 'idle'; a.timer = 1.5 + Math.random()*2; }
-          else {
-            d.normalize();
-            a.mesh.position.x += d.x * a.spd * 0.4 * dt;
-            a.mesh.position.z += d.z * a.spd * 0.4 * dt;
-            a.mesh.rotation.y = Math.atan2(d.x, d.z);
-          }
-        } else if (a.st === 'chase') {
-          if (dist < 2.5) { a.st = 'atk'; a.timer = 0.5; }
-          else if (dist > detect * 1.5) a.st = 'idle';
-          else {
-            const d = pp.clone().sub(a.mesh.position); d.y = 0; d.normalize();
-            a.mesh.position.x += d.x * a.spd * dt;
-            a.mesh.position.z += d.z * a.spd * dt;
-            a.mesh.rotation.y = Math.atan2(d.x, d.z);
-          }
-        } else if (a.st === 'atk') {
-          if (a.timer <= 0) {
-            if (dist < 3) {
-              state.hp = Math.max(0, state.hp - a.dmg);
-              document.getElementById('dmg').style.opacity = '0.6';
-              setTimeout(() => document.getElementById('dmg').style.opacity = '0', 280);
-              note('آسیب دیدی!');
-            }
-            a.st = 'chase';
-            a.timer = 0.8;
-          }
-        } else if (a.st === 'flee') {
-          const d = a.mesh.position.clone().sub(pp); d.y = 0; d.normalize();
-          a.mesh.position.x += d.x * a.spd * 1.1 * dt;
-          a.mesh.position.z += d.z * a.spd * 1.1 * dt;
-          a.mesh.rotation.y = Math.atan2(d.x, d.z);
-          if (a.timer <= 0) a.st = 'idle';
-        }
-
-        a.mesh.position.y = getH(a.mesh.position.x, a.mesh.position.z) + aTypes[a.type].sc * 0.8;
-      }
-    }
-
-    function updateDay(dt) {
-      state.day = (state.day + dt / 600) % 1;
-      const t = state.day;
-      const ang = t * Math.PI * 2 - Math.PI / 2;
-      sunPos.setFromSphericalCoords(1, Math.PI/2 - (Math.sin(ang)*0.35 + 0.45), ang);
-      skyU.sunPosition.value.copy(sunPos);
-      sunL.position.copy(sunPos).multiplyScalar(130);
-
-      const dayF = Math.max(0, Math.sin(t * Math.PI * 2));
-      sunL.intensity = dayF * 2.5 + 0.05;
-      hemi.intensity = 0.2 + dayF * 0.35;
-      moonL.intensity = (1 - dayF) * 0.45;
-      moonL.position.set(-sunPos.x, Math.abs(sunPos.y), -sunPos.z).multiplyScalar(80);
-
-      scene.fog.color.setHSL(0.58, 0.3, 0.5 + dayF * 0.25);
-      scene.fog.density = 0.0013 + (1 - dayF) * 0.001;
-      water.material.uniforms.sunDirection.value.copy(sunPos).normalize();
-
-      const h = Math.floor(t * 24);
-      const m = Math.floor((t * 24 * 60) % 60);
-      const isDay = t > 0.2 && t < 0.8;
-      document.getElementById('t-icon').textContent = isDay ? '☀️' : '🌙';
-      document.getElementById('t-text').textContent = (isDay ? 'روز ' : 'شب ') + String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
-    }
-
-    function updateUI() {
-      document.getElementById('hp-fill').style.width = state.hp + '%';
-      document.getElementById('hunger-fill').style.width = state.hunger + '%';
-      document.getElementById('stamina-fill').style.width = state.stamina + '%';
-
-      if (state.hp <= 0 && !state.over) {
-        state.over = true;
-        controls.unlock();
-        closeUI();
-        document.getElementById('over').style.display = 'flex';
-        document.getElementById('over-stats').innerHTML =
-          `زمان: ${Math.floor(state.playTime/60)} دقیقه<br>منابع: ${state.resources}<br>حیوانات: ${state.kills}`;
-      }
-    }
-
-    function renderInv() {
-      const grid = document.getElementById('inv-grid');
-      grid.innerHTML = '';
-      const items = [
-        { k: 'nails', ic: '🔩' }, { k: 'hammer', ic: '🔨' }, { k: 'saw', ic: '🪚' },
-        { k: 'wood', ic: '🪵' }, { k: 'stone', ic: '🪨' }, { k: 'fiber', ic: '🌿' },
-        { k: 'food', ic: '🍎' }, { k: 'spear', ic: '🔱' }, { k: 'axe', ic: '🪓' },
-        { k: 'boat', ic: '⛵' }
-      ];
-      items.forEach(it => {
-        const n = inv[it.k] || 0;
-        const s = document.createElement('div');
-        s.className = 'slot' + (n <= 0 ? ' empty' : '') + (it.k === 'food' && n > 0 ? ' clickable' : '');
-        s.innerHTML = `<span class="ic">\( {it.ic}</span><span class="ct"> \){n > 0 ? n : ''}</span>`;
-        if (it.k === 'food' && n > 0) {
-          s.onclick = ev => {
-            ev.stopPropagation();
-            inv.food--;
-            state.hunger = Math.min(100, state.hunger + 30);
-            state.hp = Math.min(100, state.hp + 12);
-            note('+۳۰ گرسنگی  +۱۲ سلامتی');
-            renderInv();
-          };
-        }
-        grid.appendChild(s);
-      });
-      for (let i = items.length; i < 20; i++) {
-        const s = document.createElement('div');
-        s.className = 'slot empty';
-        grid.appendChild(s);
-      }
-    }
-
-    function renderCraft() {
-      const list = document.getElementById('recipe-list');
-      list.innerHTML = '';
-      const labels = { wood: 'چوب', nails: 'میخ', fiber: 'فیبر', stone: 'سنگ' };
-      recipes.forEach(r => {
-        let can = true;
-        let cost = '';
-        for (const [k, v] of Object.entries(r.need)) {
-          const have = inv[k] || 0;
-          if (have < v) can = false;
-          cost += `<span class="\( {have >= v ? 'ok' : 'no'}"> \){labels[k]||k} \( {have}/ \){v}</span> `;
-        }
-        const div = document.createElement('div');
-        div.className = 'recipe' + (can ? '' : ' off');
-        div.innerHTML = `<div class="r-name">\( {r.name}</div><div class="r-cost"> \){cost}</div>`;
-        if (can) {
-          div.onclick = ev => {
-            ev.stopPropagation();
-            for (const [k, v] of Object.entries(r.need)) inv[k] -= v;
-            for (const [k, v] of Object.entries(r.give)) inv[k] = (inv[k] || 0) + v;
-            note(r.name + ' ساخته شد!');
-            renderCraft();
-            if (r.win) {
-              setTimeout(() => {
-                state.win = true;
-                controls.unlock();
-                closeUI();
-                document.getElementById('win').style.display = 'flex';
-                document.getElementById('win-stats').innerHTML =
-                  `زمان: ${Math.floor(state.playTime/60)} دقیقه<br>منابع: ${state.resources}<br>حیوانات: ${state.kills}`;
-              }, 400);
-            }
-          };
-        }
-        list.appendChild(div);
-      });
-    }
-
-    let last = performance.now();
-    let frames = 0, fpsT = 0;
-
-    function loop(now) {
-      requestAnimationFrame(loop);
-      const dt = Math.min((now - last) / 1000, 0.05);
-      last = now;
-
-      if (state.started && !state.over && !state.win) {
-        state.playTime += dt;
-        updatePlayer(dt);
-        updateAnimals(dt);
-        updateDay(dt);
-        updateUI();
-        water.material.uniforms.time.value += dt * 0.5;
-
-        const arr = pollen.geometry.attributes.position.array;
-        for (let i = 0; i < pCount; i++) {
-          arr[i*3+1] += Math.sin(now * 0.001 + i) * 0.006;
-          arr[i*3] += Math.sin(now * 0.0005 + i * 0.1) * 0.008;
-          if (arr[i*3+1] > 30) arr[i*3+1] = 2;
-        }
-        pollen.geometry.attributes.position.needsUpdate = true;
-      }
-
-      frames++;
-      fpsT += dt;
-      if (fpsT >= 0.5) {
-        document.getElementById('fps').textContent = 'FPS: ' + Math.round(frames / fpsT);
-        frames = 0; fpsT = 0;
-      }
-
-      composer.render();
-    }
-
-    document.getElementById('btn-start').addEventListener('click', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (state.started) return;
-
-      state.started = true;
-      document.getElementById('start').style.display = 'none';
-
-      const y = getH(0, 20) + player.h;
-      controls.object.position.set(0, y, 20);
-
-      try { controls.lock(); } catch (_) {}
-
-      document.getElementById('hint').style.display = 'block';
-      note('به جزیره خوش آمدی! چوب جمع کن و قایق بساز.');
-    });
-
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      composer.setSize(window.innerWidth, window.innerHeight);
-      fxaa.material.uniforms.resolution.value.set(1/window.innerWidth, 1/window.innerHeight);
-      bloom.resolution.set(window.innerWidth, window.innerHeight);
-    });
-
-    loop(performance.now());
-    console.log('%c جزیره نجات – نسخه کامل', 'color:#38bdf8;font-size:14px;font-weight:bold');
-  </script>
+// شروع
+init();
+</script>
 </body>
 </html>
